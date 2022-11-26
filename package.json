@@ -1,0 +1,28 @@
+{
+  "name": "garduino-aws",
+  "version": "1.0.0",
+  "description": "cloudish garden controller",
+  "main": "index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "@aws-sdk/client-apigatewaymanagementapi": "^3.216.0",
+    "@aws-sdk/client-dynamodb": "^3.216.0",
+    "@aws-sdk/util-dynamodb": "^3.216.0",
+    "@serverless/compose": "^1.3.0",
+    "@types/aws-lambda": "^8.10.109",
+    "@types/node": "^18.11.9",
+    "date-fns": "^2.29.3",
+    "serverless": "^3.25.0",
+    "serverless-compose": "^2.4.0",
+    "serverless-offline": "^11.5.0",
+    "serverless-webpack": "^5.11.0",
+    "ts-loader": "^9.4.1",
+    "typescript": "^4.9.3",
+    "webpack": "^5.75.0"
+  },
+  "scripts": {
+    "deploy": "serverless deploy",
+    "dev": "serverless offline",
+    "info": "serverless info"
+  }
+}

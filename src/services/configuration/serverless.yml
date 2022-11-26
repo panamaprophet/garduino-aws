@@ -1,0 +1,63 @@
+service: garduino-controller-configuration
+
+frameworkVersion: "3"
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: eu-west-1
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+          Resource: "arn:aws:dynamodb:eu-west-1:*:*" # @todo: use serverless pseudo params here?
+
+plugins:
+  - serverless-offline
+  - serverless-webpack
+
+custom:
+  webpack:
+    webpackConfig: "../../../webpack.config.js"
+
+resources:
+  Resources:
+    configurations:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: configurations
+        AttributeDefinitions:
+          - AttributeName: controllerId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: controllerId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+functions:
+  getConfiguration:
+    name: getConfiguration
+    handler: index.getConfiguration
+    events:
+      - http:
+          cors: true
+          path: /configuration/{controllerId}
+          method: GET
+
+  setConfiguration:
+    name: setConfiguration
+    handler: index.setConfiguration
+    events:
+      - http:
+          cors: true
+          path: /configuration/{controllerId}
+          method: PUT
