@@ -1,0 +1,63 @@
+service: garduino-data-collector
+
+frameworkVersion: "3"
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: eu-west-1
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+          Resource: "arn:aws:dynamodb:eu-west-1:*:*" # @todo: use serverless pseudo params here?
+
+plugins:
+  - serverless-offline
+  - serverless-webpack
+
+custom:
+  webpack:
+    webpackConfig: "../../../webpack.config.js"
+
+resources:
+  Resources:
+    data:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: data
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+functions:
+  store:
+    name: store
+    handler: index.store
+    events:
+      - http:
+          cors: true
+          path: /data/{controllerId}
+          method: PUT
+
+  retrieve:
+    name: retrieve
+    handler: index.retrieve
+    events:
+      - http:
+          cors: true
+          path: /data/{controllerId}
+          method: GET
