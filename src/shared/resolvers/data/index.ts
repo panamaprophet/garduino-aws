@@ -1,19 +1,16 @@
-import { PutItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
+import { PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { randomUUID } from 'crypto';
 import { client } from '../../db';
 
 
 export const getControllerData = async (controllerId: string) => {
-    const { Items } = await client.send(new ScanCommand({
+    const { Items } = await client.send(new QueryCommand({
         TableName: 'data',
-        FilterExpression: '#controllerId = :controllerId',
-        ExpressionAttributeNames: {
-            '#controllerId': 'controllerId',
-        },
-        ExpressionAttributeValues: {
-            ':controllerId': { S: controllerId },
-        }
+        IndexName: 'controllerIdIndex',
+        KeyConditionExpression: '#key = :value',
+        ExpressionAttributeNames: { '#key': 'controllerId' },
+        ExpressionAttributeValues: { ':value': { S: controllerId } },
     }));
 
     return Items ? Items.map(item => unmarshall(item)) : null;

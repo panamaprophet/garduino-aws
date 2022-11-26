@@ -14,9 +14,8 @@ provider:
       statements:
         - Effect: Allow
           Action:
-            - dynamodb:Scan
-            - dynamodb:GetItem
             - dynamodb:PutItem
+            - dynamodb:Query
           Resource: "arn:aws:dynamodb:eu-west-1:*:*" # @todo: use serverless pseudo params here?
 
 plugins:
@@ -36,12 +35,24 @@ resources:
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
+          - AttributeName: controllerId
+            AttributeType: S
         KeySchema:
           - AttributeName: id
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
+        GlobalSecondaryIndexes:
+          - IndexName: controllerIdIndex
+            KeySchema:
+              - AttributeName: controllerId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
 
 functions:
   store:
