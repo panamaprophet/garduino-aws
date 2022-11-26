@@ -8,7 +8,7 @@ export const handler = async (event: APIGatewayEvent) => {
     const { controllerId } = pathParameters!;
 
     if (!controllerId) {
-        return handleResponse({ error: 'Invalid controllerId' }, 400);
+        return handleResponse({ error: 'Invalid controllerId' }, 500);
     }
 
     const result = await getControllerData(controllerId!);

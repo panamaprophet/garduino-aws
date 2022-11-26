@@ -1,7 +1,5 @@
-import { addMilliseconds, compareDesc, differenceInMilliseconds, subDays } from 'date-fns';
+import { differenceInMilliseconds } from 'date-fns';
 
-
-const pad = (n: any, symbol = '0', length = 2) => String(n).padStart(length, symbol);
 
 const isNumber = (n: any): n is number => !isNaN(parseInt(n, 10));
 
@@ -23,24 +21,25 @@ export const getTimeRelativeConfiguration = (time: string, duration: number, ref
         return null;
     }
 
-    const dateString = `${refDate.getFullYear()}-${pad(refDate.getMonth() + 1)}-${pad(refDate.getDate())}T${pad(onHours)}:${pad(onMinutes)}Z`;
+    const onTime = new Date();
 
-    let onTime = new Date(dateString);
-    let offTime = addMilliseconds(onTime, duration);
+    onTime.setUTCHours(onHours);
+    onTime.setUTCMinutes(onMinutes);
 
-    const offHours = offTime.getHours();
+    const offTime = new Date(onTime.getTime() / 1000 + duration);
+    const isOn = refDate > onTime && refDate < offTime;
 
-    if (offHours < onHours && offHours > refDate.getHours()) {
-        onTime = subDays(onTime, 1);
-        offTime = subDays(offTime, 1);
+    if (refDate > onTime && refDate > offTime) {
+        onTime.setUTCDate(onTime.getUTCDate() + 1);
     }
 
-    const isOn = compareDesc(onTime, refDate) >= 0 && compareDesc(offTime, refDate) < 0;
-    const switchIn = differenceInMilliseconds(isOn ? offTime : onTime, refDate);
+    const switchIn = isOn
+        ? (duration - differenceInMilliseconds(refDate, offTime))
+        : differenceInMilliseconds(onTime, refDate);
 
-    return {
-        isOn,
-        duration,
-        switchIn,
+        return {
+            isOn,
+            duration,
+            switchIn,
+        };
     };
-};

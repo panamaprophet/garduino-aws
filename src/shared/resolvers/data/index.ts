@@ -1,7 +1,7 @@
 import { PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { randomUUID } from 'crypto';
-import { client } from '../../db';
+import { client } from '../../providers/db';
 
 
 export const getControllerData = async (controllerId: string) => {

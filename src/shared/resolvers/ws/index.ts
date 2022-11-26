@@ -1,8 +1,9 @@
 import { PostToConnectionCommand } from '@aws-sdk/client-apigatewaymanagementapi';
 import { DeleteItemCommand, PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { client as ws } from '../../api-gateway-management-api';
-import { client as db } from '../../db';
+import { client as ws } from '../../providers/api-gateway-management-api';
+import { client as db } from '../../providers/db';
+
 
 export const sendMessage = async (connectionId: string, message: any) => {
     return ws.send(new PostToConnectionCommand({
@@ -31,15 +32,13 @@ export const removeConnection = async (connectionId: string) => {
 };
 
 export const getConnectionId = async (clientId: string): Promise<string | null> => {
-    const params = {
+    const { Items } = await db.send(new QueryCommand({
         TableName: 'connections',
         IndexName: 'clientIdIndex',
         KeyConditionExpression: '#key = :value',
         ExpressionAttributeNames: { '#key': 'clientId' },
         ExpressionAttributeValues: { ':value': { S: clientId } },
-    };
-
-    const { Items } = await db.send(new QueryCommand(params));
+    }));
 
     if (!Items || !Items.length) {
         return null;

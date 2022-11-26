@@ -1,6 +1,6 @@
 import { GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { client } from '../../db';
+import { client } from '../../providers/db';
 import { getTimeRelativeConfiguration } from '../../helpers';
 
 

@@ -14,10 +14,9 @@ provider:
       statements:
         - Effect: Allow
           Action:
-            - dynamodb:Scan
             - dynamodb:GetItem
             - dynamodb:PutItem
-          Resource: "arn:aws:dynamodb:eu-west-1:*:*" # @todo: use serverless pseudo params here?
+          Resource: "arn:aws:dynamodb:${aws:region}:*:*" # @todo: use serverless pseudo params here?
 
 plugins:
   - serverless-offline

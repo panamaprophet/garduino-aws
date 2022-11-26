@@ -22,7 +22,7 @@
   },
   "scripts": {
     "deploy": "serverless deploy",
-    "dev": "serverless offline",
+    "dev": "serverless offline --reloadHandler",
     "info": "serverless info"
   }
 }

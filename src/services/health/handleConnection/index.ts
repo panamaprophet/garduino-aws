@@ -10,11 +10,11 @@ export const handler = async (event: APIGatewayEvent) => {
     const isConnectEvent = eventType === 'CONNECT';
 
     if (!connectionId) {
-        return handleResponse('Invalid connectionId', 400);
+        return handleResponse({ error: 'Invalid connectionId' }, 500);
     }
 
     if (isConnectEvent && !controllerId) {
-        return handleResponse('Invalid controllerId', 400);
+        return handleResponse({ error: 'Invalid controllerId' }, 500);
     }
 
     const result = isConnectEvent

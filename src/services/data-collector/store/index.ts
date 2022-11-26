@@ -9,11 +9,11 @@ export const handler = async (event: APIGatewayEvent) => {
     const payload = JSON.parse(String(event.body));
 
     if (!controllerId) {
-        return handleResponse({ error: 'Invalid controllerId' }, 400);
+        return handleResponse({ error: 'Invalid controllerId' }, 500);
     }
 
     if (!payload) {
-        return handleResponse({ error: 'Invalid payload' }, 400);
+        return handleResponse({ error: 'Invalid payload' }, 500);
     }
 
     const result = await addControllerData(controllerId, payload);
