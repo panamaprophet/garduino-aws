@@ -1,0 +1,34 @@
+import { PutItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb';
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import { randomUUID } from 'crypto';
+import { client } from '../../db';
+
+
+export const getControllerData = async (controllerId: string) => {
+    const { Items } = await client.send(new ScanCommand({
+        TableName: 'data',
+        FilterExpression: '#controllerId = :controllerId',
+        ExpressionAttributeNames: {
+            '#controllerId': 'controllerId',
+        },
+        ExpressionAttributeValues: {
+            ':controllerId': { S: controllerId },
+        }
+    }));
+
+    return Items ? Items.map(item => unmarshall(item)) : null;
+};
+
+export const addControllerData = async (controllerId: string, payload: { [k: string]: any }) => {
+    const result = await client.send(new PutItemCommand({
+        TableName: 'data',
+        Item: marshall({
+            ...payload,
+            controllerId,
+            id: randomUUID(),
+            timestamp: Date.now(),
+        }),
+    }));
+
+    return result.$metadata.httpStatusCode === 200;
+};

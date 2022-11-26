@@ -1,0 +1,97 @@
+service: garduino-controller-health
+
+frameworkVersion: "3"
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: eu-west-1
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:DeleteItem
+            - dynamodb:Query
+          Resource: "arn:aws:dynamodb:${aws:region}:*:*"
+
+  environment:
+    API_URL:
+      Fn::Join:
+        [
+          "",
+          [
+            "https://",
+            { "Ref": "WebsocketsApi" },
+            ".execute-api.${aws:region}.amazonaws.com/${opt:stage}",
+          ],
+        ]
+
+plugins:
+  - serverless-offline
+  - serverless-webpack
+
+custom:
+  webpack:
+    webpackConfig: "../../../webpack.config.js"
+
+resources:
+  Resources:
+    connections:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: connections
+        AttributeDefinitions:
+          - AttributeName: connectionId
+            AttributeType: S
+          - AttributeName: clientId
+            AttributeType: S
+
+        KeySchema:
+          - AttributeName: connectionId
+            KeyType: HASH
+
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+        GlobalSecondaryIndexes:
+          - IndexName: clientIdIndex
+            KeySchema:
+              - AttributeName: clientId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+
+functions:
+  handleConnection:
+    name: handleConnection
+    handler: index.handleConnection
+    events:
+      - websocket:
+          route: $connect
+      - websocket:
+          route: $disconnect
+
+  reboot:
+    name: reboot
+    handler: index.sendRebootAction
+    events:
+      - http:
+          path: /reboot/{controllerId}
+          method: PUT
+
+  status:
+    name: status
+    handler: index.isOnline
+    events:
+      - http:
+          path: /status/{controllerId}
+          method: GET

@@ -1,0 +1,7 @@
+services:
+  garduino-controller-configuration:
+    path: src/services/configuration
+  garduino-data-collector:
+    path: src/services/data-collector
+  garduino-controller-health:
+    path: src/services/health
