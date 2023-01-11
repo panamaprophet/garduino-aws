@@ -60,3 +60,12 @@ functions:
           cors: true
           path: /configuration/{controllerId}
           method: PUT
+
+  removeConfiguration:
+    name: removeConfiguration
+    handler: index.removeConfiguration
+    events:
+      - http:
+          cors: true
+          path: /configuration/{controllerId}
+          method: DELETE

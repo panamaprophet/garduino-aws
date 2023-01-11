@@ -1,4 +1,4 @@
-import { GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { DeleteItemCommand, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { client } from '../../providers/db';
 import { getTimeRelativeConfiguration } from '../../helpers';
@@ -40,6 +40,15 @@ export const setControllerConfiguration = async (controllerId: string, configura
         TableName: CONFIGURATIONS_TABLE,
         Item: marshall({ controllerId, ...configuration }),
     }));
+
+    return result.$metadata.httpStatusCode === 200;
+};
+
+export const removeControllerConfiguration = async (controllerId: string) => {
+    const result = await client.send(new DeleteItemCommand({
+        TableName: CONFIGURATIONS_TABLE,
+        Key: marshall({ controllerId }),
+    }))
 
     return result.$metadata.httpStatusCode === 200;
 };
