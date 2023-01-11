@@ -1,2 +1,2 @@
 export { handler as store } from './store';
-export { handler as retrieve } from './retrieve';
+export { handler as query } from './query';

@@ -67,9 +67,9 @@ functions:
           path: /data/{controllerId}
           method: PUT
 
-  retrieve:
-    name: retrieve
-    handler: index.retrieve
+  query:
+    name: query
+    handler: index.query
     events:
       - http:
           cors: true
