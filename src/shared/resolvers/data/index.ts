@@ -37,7 +37,7 @@ export const getControllerEventsByType = async (controllerId: string, eventType 
     return Items ? Items.map(item => unmarshall(item)) : null;
 }
 
-export const addControllerData = async (controllerId: string, payload: { [k: string]: any }) => {
+export const addControllerEvent = async (controllerId: string, payload: { [k: string]: any }) => {
     const result = await client.send(new PutItemCommand({
         TableName: 'data',
         Item: marshall({

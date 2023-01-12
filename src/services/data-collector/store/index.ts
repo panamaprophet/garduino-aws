@@ -1,6 +1,6 @@
 import { APIGatewayEvent } from 'aws-lambda';
 import { handleResponse } from '../../../shared/helpers';
-import { addControllerData } from '../../../shared/resolvers/data';
+import { addControllerEvent } from '../../../shared/resolvers/data';
 
 
 export const handler = async (event: APIGatewayEvent) => {
@@ -16,7 +16,7 @@ export const handler = async (event: APIGatewayEvent) => {
         return handleResponse({ error: 'Invalid payload' }, 500);
     }
 
-    const result = await addControllerData(controllerId, payload);
+    const result = await addControllerEvent(controllerId, payload);
 
     return handleResponse(result);
 };
