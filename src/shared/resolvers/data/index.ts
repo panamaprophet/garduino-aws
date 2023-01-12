@@ -4,17 +4,38 @@ import { randomUUID } from 'crypto';
 import { client } from '../../providers/db';
 
 
-export const getControllerData = async (controllerId: string) => {
+export const getControllerEvents = async (controllerId: string) => {
     const { Items } = await client.send(new QueryCommand({
         TableName: 'data',
         IndexName: 'controllerIdIndex',
         KeyConditionExpression: '#key = :value',
         ExpressionAttributeNames: { '#key': 'controllerId' },
         ExpressionAttributeValues: { ':value': { S: controllerId } },
+        ScanIndexForward: false,
     }));
 
     return Items ? Items.map(item => unmarshall(item)) : null;
 };
+
+export const getControllerEventsByType = async (controllerId: string, eventType = 'events/update') => {
+    const { Items } = await client.send(new QueryCommand({
+        TableName: 'data',
+        IndexName: 'controllerIdIndex',
+        KeyConditionExpression: '#key = :value',
+        FilterExpression: '#event = :event',
+        ExpressionAttributeNames: {
+            '#key': 'controllerId',
+            '#event': 'event',
+        },
+        ExpressionAttributeValues: {
+            ':value': { S: controllerId },
+            ':event': { S: eventType },
+        },
+        ScanIndexForward: false,
+    }));
+
+    return Items ? Items.map(item => unmarshall(item)) : null;
+}
 
 export const addControllerData = async (controllerId: string, payload: { [k: string]: any }) => {
     const result = await client.send(new PutItemCommand({
