@@ -11,6 +11,7 @@ export const getControllerEvents = async (controllerId: string) => {
         KeyConditionExpression: '#key = :value',
         ExpressionAttributeNames: { '#key': 'controllerId' },
         ExpressionAttributeValues: { ':value': { S: controllerId } },
+        ProjectionExpression: 'ts, event, humidity, temperature, errorMessage',
         ScanIndexForward: false,
     }));
 
@@ -31,6 +32,7 @@ export const getControllerEventsByType = async (controllerId: string, eventType 
             ':value': { S: controllerId },
             ':event': { S: eventType },
         },
+        ProjectionExpression: 'ts, event, humidity, temperature, errorMessage',
         ScanIndexForward: false,
     }));
 
@@ -44,7 +46,7 @@ export const addControllerEvent = async (controllerId: string, payload: { [k: st
             ...payload,
             controllerId,
             id: randomUUID(),
-            timestamp: Date.now(),
+            ts: Date.now(),
         }),
     }));
 

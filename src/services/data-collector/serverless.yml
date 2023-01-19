@@ -6,8 +6,13 @@ useDotenv: true
 
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: nodejs18.x
   region: eu-west-1
+  architecture: arm64
+  memorySize: 512
+
+  httpApi:
+    cors: true
 
   iam:
     role:
@@ -37,13 +42,13 @@ resources:
             AttributeType: S
           - AttributeName: controllerId
             AttributeType: S
-          - AttributeName: timestamp
+          - AttributeName: ts
             AttributeType: N
 
         KeySchema:
           - AttributeName: id
             KeyType: HASH
-          - AttributeName: timestamp
+          - AttributeName: ts
             KeyType: RANGE
 
         ProvisionedThroughput:
@@ -55,7 +60,7 @@ resources:
             KeySchema:
               - AttributeName: controllerId
                 KeyType: HASH
-              - AttributeName: timestamp
+              - AttributeName: ts
                 KeyType: RANGE
             Projection:
               ProjectionType: ALL
@@ -63,21 +68,23 @@ resources:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
 
+  Outputs:
+    url:
+      Value:
+        Fn::Join: [ "", [ "https://", { "Ref": "HttpApi" }, ".execute-api.${aws:region}.amazonaws.com"] ]
+
 functions:
   store:
     name: store
     handler: index.store
     events:
-      - http:
-          cors: true
+      - httpApi:
           path: /data/{controllerId}
           method: PUT
-
   query:
     name: query
     handler: index.query
     events:
-      - http:
-          cors: true
+      - httpApi:
           path: /data/{controllerId}
           method: GET

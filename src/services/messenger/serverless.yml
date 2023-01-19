@@ -1,0 +1,59 @@
+service: garduino-messenger
+
+frameworkVersion: "3"
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: eu-west-1
+  architecture: arm64
+  memorySize: 512
+
+  environment:
+    DATA_COLLECTOR_URL: ${param:dataCollectorUrl}
+    CONTROLLER_CONFIGURATION_URL: ${param:controllerConfigurationUrl}
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - iot:Publish
+            - iot:Connect
+          Resource: "arn:aws:iot:${aws:region}:*:*"
+
+plugins:
+  - serverless-offline
+  - serverless-webpack
+
+custom:
+  webpack:
+    webpackConfig: "../../../webpack.config.js"
+
+functions:
+  getControllerConfiguration:
+    name: getControllerConfiguration
+    handler: index.getConfiguration
+    events:
+      - iot:
+          sql: "SELECT topic(2) as controllerId FROM 'controllers/+/config/pub'"
+  processControllerEvent:
+    name: processControllerEvent
+    handler: index.processEvent
+    events:
+      - iot:
+          sql: "SELECT *, topic(2) as controllerId FROM 'controllers/+/events/pub'"
+
+
+# controller sends:
+#
+#   controllers/<controllerId>/config/pub
+#   controllers/<controllerId>/events/pub
+
+# controller receives:
+#
+#   controllers/<controllerId>/config/sub
+#   controllers/<controllerId>/reboot/sub
+
