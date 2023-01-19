@@ -1,7 +1,10 @@
+import { IoTEvent } from 'aws-lambda';
 import { differenceInMilliseconds } from 'date-fns';
 
 
 const isNumber = (n: any): n is number => !isNaN(parseInt(n, 10));
+
+const isValidEvent = (event: any): event is IoTEvent<{ controllerId: string, [k: string]: any }> => (typeof event === 'object') && 'controllerId' in event;
 
 
 export const handleResponse = (body: any, statusCode = 200, headers = {}) => ({
@@ -37,9 +40,19 @@ export const getTimeRelativeConfiguration = (time: string, duration: number, ref
         ? (duration - differenceInMilliseconds(refDate, offTime))
         : differenceInMilliseconds(onTime, refDate);
 
-        return {
-            isOn,
-            duration,
-            switchIn,
-        };
+    return {
+        isOn,
+        duration,
+        switchIn,
     };
+};
+
+export const decorateWithPayloadValidation = (handler: any) => (event: any) => {
+    if (!isValidEvent(event)) {
+        console.log(`invalid payload: expecting object, received ${(typeof event)}`);
+
+        return handleResponse({ error: 'invalid payload' }, 500);
+    }
+
+    return handler(event);
+};

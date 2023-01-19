@@ -1,7 +1,12 @@
 services:
   garduino-controller-configuration:
     path: src/services/configuration
+
   garduino-data-collector:
     path: src/services/data-collector
-  garduino-controller-health:
-    path: src/services/health
+
+  garduino-messenger:
+    path: src/services/messenger
+    params:
+      controllerConfigurationUrl: ${garduino-controller-configuration.url}
+      dataCollectorUrl: ${garduino-data-collector.url}
