@@ -2,3 +2,7 @@ node_modules/
 .serverless/
 .webpack/
 .env
+.yarn/
+.vscode/
+.DS_Store
+.yarnrc.yml
