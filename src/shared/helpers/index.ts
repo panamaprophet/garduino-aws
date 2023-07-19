@@ -1,5 +1,5 @@
 import { IoTEvent } from 'aws-lambda';
-import { differenceInMilliseconds } from 'date-fns';
+import { addDays, addMilliseconds, differenceInMilliseconds, parse } from 'date-fns';
 
 
 const isNumber = (n: any): n is number => !isNaN(parseInt(n, 10));
@@ -16,28 +16,22 @@ export const handleResponse = (body: any, statusCode = 200, headers = {}) => ({
     }
 });
 
-// @todo: revisit this function, it copied from the old repo as is and looks ugly
 export const getTimeRelativeConfiguration = (time: string, duration: number, refDate = new Date()) => {
-    const [onHours, onMinutes] = time.split(':').map(Number);
+    let onTime = parse(`${time} Z`, 'HH:mm X', refDate);
+    let offTime = addMilliseconds(onTime, duration);
 
-    if (!isNumber(onHours) || !isNumber(onMinutes)) {
-        return null;
+    const isOn = (refDate >= onTime && refDate < offTime);
+    const hasMidnightCross = refDate > offTime && refDate > onTime;
+
+    if (hasMidnightCross) {
+        onTime = addDays(onTime, 1);
+        offTime = addDays(offTime, 1);
     }
 
-    const onTime = new Date();
-
-    onTime.setUTCHours(onHours);
-    onTime.setUTCMinutes(onMinutes);
-
-    const offTime = new Date(onTime.getTime() / 1000 + duration);
-    const isOn = refDate > onTime && refDate < offTime;
-
-    if (refDate > onTime && refDate > offTime) {
-        onTime.setUTCDate(onTime.getUTCDate() + 1);
-    }
+    console.log('onTime: %s\noffTime: %s\ncurrentTime: %s\nisOn: %s\n', onTime, offTime, refDate, isOn);
 
     const switchIn = isOn
-        ? (duration - differenceInMilliseconds(refDate, offTime))
+        ? duration - differenceInMilliseconds(refDate, onTime)
         : differenceInMilliseconds(onTime, refDate);
 
     return {
