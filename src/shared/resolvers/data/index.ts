@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 import { client } from '../../providers/db';
 
 
-export const getControllerEvents = async (controllerId: string) => {
+export const getControllerEvents = async (controllerId: string, options = { limit: 100 }) => {
     const { Items } = await client.send(new QueryCommand({
         TableName: 'data',
         IndexName: 'controllerIdIndex',
@@ -13,12 +13,13 @@ export const getControllerEvents = async (controllerId: string) => {
         ExpressionAttributeValues: { ':value': { S: controllerId } },
         ProjectionExpression: 'ts, event, humidity, temperature, errorMessage',
         ScanIndexForward: false,
+        Limit: options.limit,
     }));
 
     return Items ? Items.map(item => unmarshall(item)) : null;
 };
 
-export const getControllerEventsByType = async (controllerId: string, eventType = 'events/update') => {
+export const getControllerEventsByType = async (controllerId: string, eventType = 'events/update', options = { limit: 100 }) => {
     const { Items } = await client.send(new QueryCommand({
         TableName: 'data',
         IndexName: 'controllerIdIndex',
@@ -34,6 +35,7 @@ export const getControllerEventsByType = async (controllerId: string, eventType 
         },
         ProjectionExpression: 'ts, event, humidity, temperature, errorMessage',
         ScanIndexForward: false,
+        Limit: options.limit,
     }));
 
     return Items ? Items.map(item => unmarshall(item)) : null;
