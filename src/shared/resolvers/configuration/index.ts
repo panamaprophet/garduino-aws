@@ -25,14 +25,19 @@ const mapConfiguration = (configuration: { [k: string]: any }) => {
     };
 };
 
-
-export const getControllerConfiguration = async (controllerId: string) => {
+export const getControllerConfigurationRaw = async (controllerId: string) => {
     const { Item } = await client.send(new GetItemCommand({
         TableName: CONFIGURATIONS_TABLE,
         Key: marshall({ controllerId }),
     }));
 
-    return Item ? mapConfiguration(unmarshall(Item)) : null;
+    return Item ? unmarshall(Item) : null;
+};
+
+export const getControllerConfiguration = async (controllerId: string) => {
+    const result = await getControllerConfigurationRaw(controllerId);
+
+    return result ? mapConfiguration(result) : null;
 };
 
 export const setControllerConfiguration = async (controllerId: string, configuration: { [k: string]: any }) => {

@@ -1,12 +1,16 @@
 import { APIGatewayEvent } from 'aws-lambda';
 import { handleResponse } from '../../../shared/helpers';
-import { getControllerConfiguration } from '../../../shared/resolvers/configuration';
+import { getControllerConfiguration, getControllerConfigurationRaw } from '../../../shared/resolvers/configuration';
 
 
 export const handler = async (event: APIGatewayEvent) => {
-    const { pathParameters } = event;
+    const { pathParameters, queryStringParameters} = event;
     const { controllerId } = pathParameters!;
-    const configuration = await getControllerConfiguration(controllerId!);
-    
+    const isRaw = queryStringParameters?.raw;
+
+    const configuration = isRaw
+        ? await getControllerConfigurationRaw(controllerId!)
+        : await getControllerConfiguration(controllerId!);
+
     return handleResponse(configuration);
 };
