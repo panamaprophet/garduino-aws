@@ -4,42 +4,39 @@ import { randomUUID } from 'crypto';
 import { client } from '../../providers/db';
 
 
-export const getControllerEvents = async (controllerId: string, options = { limit: 100 }) => {
+const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
+
+interface Options {
+    limit: number;
+    startDate: number | string;
+    endDate: number | string;
+}
+
+export const getControllerEvents = async (controllerId: string, options: Partial<Options>) => {
+    const startDate = options.startDate || (Date.now() - DAY_IN_MILLISECONDS);
+    const endDate = options.endDate || Date.now();
+    const limit = options.limit || 100;
+
     const { Items } = await client.send(new QueryCommand({
         TableName: 'data',
         IndexName: 'controllerIdIndex',
-        KeyConditionExpression: '#key = :value',
-        ExpressionAttributeNames: { '#key': 'controllerId' },
-        ExpressionAttributeValues: { ':value': { S: controllerId } },
-        ProjectionExpression: 'ts, event, humidity, temperature, errorMessage',
+        KeyConditionExpression: '#key = :value AND #ts BETWEEN :startDate AND :endDate',
+        ExpressionAttributeNames: {
+            '#key': 'controllerId',
+            '#ts': 'ts',
+        },
+        ExpressionAttributeValues: {
+            ':value': { S: controllerId },
+            ':startDate': { N: String(startDate) },
+            ':endDate': { N: String(endDate) },
+        },
+        ProjectionExpression: 'ts, humidity, temperature',
         ScanIndexForward: false,
-        Limit: options.limit,
+        Limit: limit,
     }));
 
     return Items ? Items.map(item => unmarshall(item)) : null;
 };
-
-export const getControllerEventsByType = async (controllerId: string, eventType = 'events/update', options = { limit: 100 }) => {
-    const { Items } = await client.send(new QueryCommand({
-        TableName: 'data',
-        IndexName: 'controllerIdIndex',
-        KeyConditionExpression: '#key = :value',
-        FilterExpression: '#event = :event',
-        ExpressionAttributeNames: {
-            '#key': 'controllerId',
-            '#event': 'event',
-        },
-        ExpressionAttributeValues: {
-            ':value': { S: controllerId },
-            ':event': { S: eventType },
-        },
-        ProjectionExpression: 'ts, event, humidity, temperature, errorMessage',
-        ScanIndexForward: false,
-        Limit: options.limit,
-    }));
-
-    return Items ? Items.map(item => unmarshall(item)) : null;
-}
 
 export const addControllerEvent = async (controllerId: string, payload: { [k: string]: any }) => {
     const result = await client.send(new PutItemCommand({
