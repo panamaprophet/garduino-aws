@@ -20,19 +20,17 @@ export const getTimeRelativeConfiguration = (time: string, duration: number, ref
     let onTime = parse(`${time} Z`, 'HH:mm X', refDate);
     let offTime = addMilliseconds(onTime, duration);
 
-    const isOn = (refDate >= onTime && refDate < offTime);
-    const hasMidnightCross = refDate > offTime && refDate > onTime;
+    const isOn = (refDate >= onTime && refDate <= offTime);
 
-    if (hasMidnightCross) {
+    if (offTime < refDate) {
         onTime = addDays(onTime, 1);
-        offTime = addDays(offTime, 1);
     }
-
-    console.log('onTime: %s\noffTime: %s\ncurrentTime: %s\nisOn: %s\n', onTime, offTime, refDate, isOn);
 
     const switchIn = isOn
         ? duration - differenceInMilliseconds(refDate, onTime)
         : differenceInMilliseconds(onTime, refDate);
+
+    console.log('onTime: %s\noffTime: %s\ncurrentTime: %s\nisOn: %s\n', onTime, offTime, refDate, isOn);
 
     return {
         isOn,

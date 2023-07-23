@@ -9,10 +9,7 @@ const CONFIGURATIONS_TABLE = 'configurations';
 
 
 const mapConfiguration = (configuration: { [k: string]: any }) => {
-    const timerConfiguration = getTimeRelativeConfiguration(
-        configuration.onTime,
-        configuration.duration
-    );
+    const timerConfiguration = getTimeRelativeConfiguration(configuration.onTime, configuration.duration);
 
     if (!timerConfiguration) {
         return null;

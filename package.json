@@ -28,6 +28,6 @@
     "deploy": "serverless deploy",
     "dev": "serverless offline --reloadHandler",
     "info": "serverless info",
-    "test": "jest --silent"
+    "test": "jest"
   }
 }
