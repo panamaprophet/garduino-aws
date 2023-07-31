@@ -1,4 +1,4 @@
-import { DeleteItemCommand, GetItemCommand, PutItemCommand } from '@aws-sdk/client-dynamodb';
+import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { client } from '../../providers/db';
 import { getTimeRelativeConfiguration } from '../../helpers';
@@ -53,4 +53,23 @@ export const removeControllerConfiguration = async (controllerId: string) => {
     }))
 
     return result.$metadata.httpStatusCode === 200;
+};
+
+export const getControllerIdsByOwnerId = async (ownerId: string) => {
+    const result = await client.send(new QueryCommand({
+        TableName: CONFIGURATIONS_TABLE,
+        IndexName: 'ownerIdIndex',
+        KeyConditionExpression: '#key = :value',
+        ExpressionAttributeNames: { '#key': 'ownerId' },
+        ExpressionAttributeValues: { ':value': { S: ownerId } },
+        ProjectionExpression: 'controllerId',
+    }));
+
+    if (!result.Items) {
+        return null;
+    }
+
+    return result.Items
+        .map(item => unmarshall(item))
+        .map(item => item.controllerId);
 };

@@ -14,6 +14,14 @@ provider:
   httpApi:
     cors: true
 
+    authorizers:
+      cognitoJwtAuthorizer:
+        type: jwt
+        identitySource: $request.header.Authorization
+        issuerUrl: https://cognito-idp.${aws:region}.amazonaws.com/${env:AWS_COGNITO_POOL_ID}
+        audience:
+          - ${env:AWS_COGNITO_CLIENT_ID}
+
   iam:
     role:
       statements:
@@ -21,6 +29,7 @@ provider:
           Action:
             - dynamodb:GetItem
             - dynamodb:PutItem
+            - dynamodb:Query 
           Resource: "arn:aws:dynamodb:${aws:region}:*:*"
 
 plugins:
@@ -40,6 +49,8 @@ resources:
         AttributeDefinitions:
           - AttributeName: controllerId
             AttributeType: S
+          - AttributeName: ownerId
+            AttributeType: S
         KeySchema:
           - AttributeName: controllerId
             KeyType: HASH
@@ -47,12 +58,36 @@ resources:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
 
+        GlobalSecondaryIndexes:
+          - IndexName: ownerIdIndex
+            KeySchema:
+              - AttributeName: ownerId
+                KeyType: HASH
+              - AttributeName: controllerId
+                KeyType: RANGE
+
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+
   Outputs:
     url:
       Value:
         Fn::Join: [ "", [ "https://", { "Ref": "HttpApi" }, ".execute-api.${aws:region}.amazonaws.com"] ]
 
 functions:
+  getConfigurations:
+    name: getConfigurations
+    handler: index.getConfigurations
+    events:
+      - httpApi:
+          path: /configuration
+          method: GET
+          authorizer:
+            name: cognitoJwtAuthorizer
+
   getConfiguration:
     name: getConfiguration
     handler: index.getConfiguration
@@ -68,6 +103,8 @@ functions:
       - httpApi:
           path: /configuration/{controllerId}
           method: PUT
+          authorizer:
+            name: cognitoJwtAuthorizer
 
   removeConfiguration:
     name: removeConfiguration
@@ -76,3 +113,5 @@ functions:
       - httpApi:
           path: /configuration/{controllerId}
           method: DELETE
+          authorizer:
+            name: cognitoJwtAuthorizer

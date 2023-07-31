@@ -15,7 +15,7 @@ interface Options {
 export const getControllerEvents = async (controllerId: string, options: Partial<Options>) => {
     const startDate = options.startDate || (Date.now() - DAY_IN_MILLISECONDS);
     const endDate = options.endDate || Date.now();
-    const limit = options.limit || 100;
+    const limit = options.limit;
 
     const { Items } = await client.send(new QueryCommand({
         TableName: 'data',
@@ -30,7 +30,7 @@ export const getControllerEvents = async (controllerId: string, options: Partial
             ':startDate': { N: String(startDate) },
             ':endDate': { N: String(endDate) },
         },
-        ProjectionExpression: 'ts, humidity, temperature',
+        ProjectionExpression: 'ts, humidity, temperature, event, isOn',
         ScanIndexForward: false,
         Limit: limit,
     }));
