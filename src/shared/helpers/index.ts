@@ -1,11 +1,17 @@
 import { IoTEvent } from 'aws-lambda';
-import { addDays, addMilliseconds, differenceInMilliseconds, parse } from 'date-fns';
-
-
-const isNumber = (n: any): n is number => !isNaN(parseInt(n, 10));
+import {
+    addDays,
+    addMilliseconds,
+    differenceInMilliseconds,
+    isAfter,
+    isBefore,
+    isEqual,
+    parse,
+    startOfDay,
+    subDays,
+} from 'date-fns';
 
 const isValidEvent = (event: any): event is IoTEvent<{ controllerId: string, [k: string]: any }> => (typeof event === 'object') && 'controllerId' in event;
-
 
 export const handleResponse = (body: any, statusCode = 200, headers = {}) => ({
     statusCode,
@@ -16,26 +22,34 @@ export const handleResponse = (body: any, statusCode = 200, headers = {}) => ({
     }
 });
 
-export const getTimeRelativeConfiguration = (time: string, duration: number, refDate = new Date()) => {
-    let onTime = parse(`${time} Z`, 'HH:mm X', refDate);
+export const getTimeRelativeConfiguration = (time: string, duration: number, referenceDate = new Date()) => {
+    let onTime = parse(`${time} Z`, 'HH:mm X', startOfDay(referenceDate));
     let offTime = addMilliseconds(onTime, duration);
 
-    const isOn = (refDate >= onTime && refDate <= offTime);
-
-    if (offTime < refDate) {
-        onTime = addDays(onTime, 1);
+    if (isAfter(onTime, referenceDate)) {
+        onTime = subDays(onTime, 1);
+        offTime = addMilliseconds(onTime, duration);
     }
 
-    const switchIn = isOn
-        ? duration - differenceInMilliseconds(refDate, onTime)
-        : differenceInMilliseconds(onTime, refDate);
+    if (isBefore(offTime, referenceDate)) {
+        onTime = addDays(onTime, 1);
+        offTime = addMilliseconds(onTime, duration);
+    }
 
-    console.log('onTime: %s\noffTime: %s\ncurrentTime: %s\nisOn: %s\n', onTime, offTime, refDate, isOn);
+    const isOn =
+        (isAfter(referenceDate, onTime) || isEqual(referenceDate, onTime)) &&
+        (isBefore(referenceDate, offTime) || isEqual(referenceDate, offTime));
+
+    const switchIn = isOn
+        ? differenceInMilliseconds(offTime, referenceDate)
+        : differenceInMilliseconds(onTime, referenceDate);
+
+    // console.log('onTime: %s\noffTime: %s\ncurrentTime: %s\nisOn: %s\n', onTime, offTime, referenceDate, isOn);
 
     return {
         isOn,
-        duration,
         switchIn,
+        duration,
     };
 };
 
