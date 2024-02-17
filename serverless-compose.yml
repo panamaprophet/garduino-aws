@@ -5,8 +5,14 @@ services:
   garduino-data-collector:
     path: src/services/data-collector
 
-  garduino-messenger:
-    path: src/services/messenger
+  garduino-mqtt:
+    path: src/services/mqtt
+    params:
+      controllerConfigurationUrl: ${garduino-controller-configuration.url}
+      dataCollectorUrl: ${garduino-data-collector.url}
+
+  garduino-controller-api-gateway:
+    path: src/services/api-gateway
     params:
       controllerConfigurationUrl: ${garduino-controller-configuration.url}
       dataCollectorUrl: ${garduino-data-collector.url}
