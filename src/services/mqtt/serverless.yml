@@ -1,7 +1,5 @@
 service: garduino-messenger
-
 frameworkVersion: "3"
-
 useDotenv: true
 
 provider:
@@ -33,19 +31,19 @@ custom:
     webpackConfig: "../../../webpack.config.js"
 
 functions:
-  getControllerConfiguration:
-    name: getControllerConfiguration
-    handler: index.getConfiguration
+  mqttConfigurationTopicHandler:
+    name: mqttConfigurationTopicHandler
+    handler: index.mqttConfigurationTopicHandler
     events:
       - iot:
           sql: "SELECT topic(2) as controllerId FROM 'controllers/+/config/pub'"
-  processControllerEvent:
-    name: processControllerEvent
-    handler: index.processEvent
+
+  mqttEventTopicHandler:
+    name: mqttEventTopicHandler
+    handler: index.mqttEventTopicHandler
     events:
       - iot:
           sql: "SELECT *, topic(2) as controllerId FROM 'controllers/+/events/pub'"
-
 
 # controller sends:
 #
