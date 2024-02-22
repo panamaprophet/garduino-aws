@@ -31,27 +31,9 @@ custom:
     webpackConfig: "../../../webpack.config.js"
 
 functions:
-  mqttConfigurationTopicHandler:
-    name: mqttConfigurationTopicHandler
-    handler: index.mqttConfigurationTopicHandler
+  mqttTopicHandler:
+    name: mqttTopicHandler
+    handler: index.handler
     events:
       - iot:
-          sql: "SELECT topic(2) as controllerId FROM 'controllers/+/config/pub'"
-
-  mqttEventTopicHandler:
-    name: mqttEventTopicHandler
-    handler: index.mqttEventTopicHandler
-    events:
-      - iot:
-          sql: "SELECT *, topic(2) as controllerId FROM 'controllers/+/events/pub'"
-
-# controller sends:
-#
-#   controllers/<controllerId>/config/pub
-#   controllers/<controllerId>/events/pub
-
-# controller receives:
-#
-#   controllers/<controllerId>/config/sub
-#   controllers/<controllerId>/reboot/sub
-
+          sql: "SELECT *, topic(2) as controllerId, topic(3) as messageType FROM 'controllers/+/+/pub'"
