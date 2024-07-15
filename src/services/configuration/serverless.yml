@@ -31,6 +31,15 @@ provider:
             - dynamodb:PutItem
             - dynamodb:Query 
           Resource: "arn:aws:dynamodb:${aws:region}:*:*"
+        - Effect: Allow
+          Action:
+            - iot:AttachPolicy	
+            - iot:AttachThingPrincipal
+            - iot:CreateThing
+            - iot:CreatePolicy
+            - iot:CreateKeysAndCertificate
+          Resource: "*"
+
 
 plugins:
   - serverless-offline
@@ -78,7 +87,7 @@ resources:
         Fn::Join: [ "", [ "https://", { "Ref": "HttpApi" }, ".execute-api.${aws:region}.amazonaws.com"] ]
 
 functions:
-  getConfigurations:
+  list:
     name: getConfigurations
     handler: index.getConfigurations
     events:
@@ -88,7 +97,7 @@ functions:
           authorizer:
             name: cognitoJwtAuthorizer
 
-  getConfiguration:
+  get:
     name: getConfiguration
     handler: index.getConfiguration
     events:
@@ -96,7 +105,20 @@ functions:
           path: /configuration/{controllerId}
           method: GET
 
-  setConfiguration:
+  create:
+    name: createConfiguration
+    handler: index.createConfiguration
+    events:
+      - httpApi:
+          path: /configuration
+          method: POST
+          authorizer:
+            name: cognitoJwtAuthorizer
+    environment:
+      AWS_COGNITO_POOL_ID: ${env:AWS_COGNITO_POOL_ID}
+      AWS_COGNITO_CLIENT_ID: ${env:AWS_COGNITO_CLIENT_ID}
+
+  update:
     name: setConfiguration
     handler: index.setConfiguration
     events:

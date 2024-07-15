@@ -2,13 +2,22 @@ import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand } from 
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { client } from '../../providers/db';
 import { getTimeRelativeConfiguration } from '../../helpers';
+import { randomUUID, UUID } from 'crypto';
+
+interface Configuration {
+    ownerId: UUID;
+    onTime: `${number}:${number}`;
+    duration: number;
+    thresholdTemperature: number;
+    fanSpeed: number;
+}
 
 
 // @todo: move it to process.env.CONFIGURATIONS_TABLE
 const CONFIGURATIONS_TABLE = 'configurations';
 
 
-const mapConfiguration = (configuration: { [k: string]: any }) => {
+const mapConfiguration = (configuration: Configuration) => {
     const timerConfiguration = getTimeRelativeConfiguration(configuration.onTime, configuration.duration);
 
     if (!timerConfiguration) {
@@ -28,7 +37,7 @@ export const getControllerConfigurationRaw = async (controllerId: string) => {
         Key: marshall({ controllerId }),
     }));
 
-    return Item ? unmarshall(Item) : null;
+    return Item ? unmarshall(Item) as Configuration : null;
 };
 
 export const getControllerConfiguration = async (controllerId: string) => {
@@ -37,7 +46,7 @@ export const getControllerConfiguration = async (controllerId: string) => {
     return result ? mapConfiguration(result) : null;
 };
 
-export const setControllerConfiguration = async (controllerId: string, configuration: { [k: string]: any }) => {
+export const setControllerConfiguration = async (controllerId: string, configuration: Configuration) => {
     const result = await client.send(new PutItemCommand({
         TableName: CONFIGURATIONS_TABLE,
         Item: marshall({ controllerId, ...configuration }),
@@ -72,4 +81,19 @@ export const getControllerIdsByOwnerId = async (ownerId: string) => {
     return result.Items
         .map(item => unmarshall(item))
         .map(item => item.controllerId);
+};
+
+export const createConfiguration = async (controllerId: UUID, props: Partial<Configuration>) => {
+    const configuration: Configuration = {
+        ownerId: randomUUID(),
+        onTime: '12:00',
+        duration: 43200000,
+        thresholdTemperature: 30,
+        fanSpeed: 125,
+        ...props,
+    };
+
+    await setControllerConfiguration(controllerId, configuration);
+
+    return { controllerId, ...configuration };
 };
