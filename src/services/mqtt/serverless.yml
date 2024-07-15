@@ -4,10 +4,10 @@ useDotenv: true
 
 provider:
   name: aws
-  runtime: nodejs18.x
+  runtime: nodejs20.x
   region: eu-west-1
   architecture: arm64
-  memorySize: 512
+  memorySize: 256
 
   environment:
     DATA_COLLECTOR_URL: ${param:dataCollectorUrl}
