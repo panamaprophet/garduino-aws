@@ -6,10 +6,14 @@ useDotenv: true
 
 provider:
   name: aws
-  runtime: nodejs18.x
+  runtime: nodejs20.x
   region: eu-west-1
   architecture: arm64
   memorySize: 256
+
+  environment:
+    AWS_COGNITO_POOL_ID: ${env:AWS_COGNITO_POOL_ID}
+    AWS_COGNITO_CLIENT_ID: ${env:AWS_COGNITO_CLIENT_ID}
 
   httpApi:
     cors: true
@@ -29,17 +33,17 @@ provider:
           Action:
             - dynamodb:GetItem
             - dynamodb:PutItem
-            - dynamodb:Query 
+            - dynamodb:Query
           Resource: "arn:aws:dynamodb:${aws:region}:*:*"
+
         - Effect: Allow
           Action:
-            - iot:AttachPolicy	
+            - iot:AttachPolicy
             - iot:AttachThingPrincipal
             - iot:CreateThing
             - iot:CreatePolicy
             - iot:CreateKeysAndCertificate
           Resource: "*"
-
 
 plugins:
   - serverless-offline
@@ -84,7 +88,15 @@ resources:
   Outputs:
     url:
       Value:
-        Fn::Join: [ "", [ "https://", { "Ref": "HttpApi" }, ".execute-api.${aws:region}.amazonaws.com"] ]
+        Fn::Join:
+          [
+            "",
+            [
+              "https://",
+              { "Ref": "HttpApi" },
+              ".execute-api.${aws:region}.amazonaws.com",
+            ],
+          ]
 
 functions:
   list:
@@ -104,6 +116,8 @@ functions:
       - httpApi:
           path: /configuration/{controllerId}
           method: GET
+          authorizer:
+            name: cognitoJwtAuthorizer
 
   create:
     name: createConfiguration
@@ -114,9 +128,6 @@ functions:
           method: POST
           authorizer:
             name: cognitoJwtAuthorizer
-    environment:
-      AWS_COGNITO_POOL_ID: ${env:AWS_COGNITO_POOL_ID}
-      AWS_COGNITO_CLIENT_ID: ${env:AWS_COGNITO_CLIENT_ID}
 
   update:
     name: updateConfiguration
