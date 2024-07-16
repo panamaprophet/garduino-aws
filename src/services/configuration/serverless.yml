@@ -6,7 +6,7 @@ useDotenv: true
 
 provider:
   name: aws
-  runtime: nodejs20.x
+  runtime: nodejs18.x
   region: eu-west-1
   architecture: arm64
   memorySize: 256
@@ -119,8 +119,8 @@ functions:
       AWS_COGNITO_CLIENT_ID: ${env:AWS_COGNITO_CLIENT_ID}
 
   update:
-    name: setConfiguration
-    handler: index.setConfiguration
+    name: updateConfiguration
+    handler: index.updateConfiguration
     events:
       - httpApi:
           path: /configuration/{controllerId}
@@ -128,7 +128,7 @@ functions:
           authorizer:
             name: cognitoJwtAuthorizer
 
-  removeConfiguration:
+  remove:
     name: removeConfiguration
     handler: index.removeConfiguration
     events:

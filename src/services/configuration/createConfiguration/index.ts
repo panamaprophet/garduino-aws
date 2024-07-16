@@ -1,21 +1,13 @@
 import { randomUUID, UUID } from 'crypto';
-import { APIGatewayProxyHandler } from 'aws-lambda';
-
-import { decodeJwt } from '../../../shared/services/jwt';
+import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
 import { createController } from '../../../shared/services/iot';
-import { createConfiguration } from '../../../shared/resolvers/configuration';
+import { createConfiguration } from '../../../shared/services/configuration';
 
-export const handler: APIGatewayProxyHandler = async (event, context) => {
+export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event, context) => {
     try {
-        console.log('event:', event, context);
+        const { jwt } = event.requestContext.authorizer;
 
-        const authorization = event.headers.authorization ?? '';
-        const [, token] = authorization.split(' ');
-        const jwt = await decodeJwt(token ?? '');
-
-        console.log('decoded jwt:', jwt);
-
-        const ownerId = jwt!.sub as UUID;
+        const ownerId = jwt.claims.sub as UUID;
         const controllerId = randomUUID();
 
         const controller = await createController(controllerId);

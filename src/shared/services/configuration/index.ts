@@ -1,6 +1,6 @@
 import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { client } from '../../providers/db';
+import { client } from '../db';
 import { getTimeRelativeConfiguration } from '../../helpers';
 import { randomUUID, UUID } from 'crypto';
 
