@@ -1,7 +1,7 @@
 import { randomUUID, UUID } from 'crypto';
 import { APIGatewayProxyHandlerV2WithJWTAuthorizer } from 'aws-lambda';
-import { attachPolicy, attachThingPrincipal, createCertificates, createMqttPolicy, createThing, getRootCACertificate } from '../../../shared/services/iot';
-import { createConfiguration } from '../../../shared/services/configuration';
+import { attachPolicy, attachThingPrincipal, createCertificates, createMqttPolicy, createThing, getRootCACertificate } from '@/shared/services/iot';
+import { createConfiguration } from '@/shared/services/configuration';
 
 export const handler: APIGatewayProxyHandlerV2WithJWTAuthorizer = async (event, context) => {
     try {
