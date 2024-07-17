@@ -4,7 +4,7 @@ useDotenv: true
 
 provider:
   name: aws
-  runtime: nodejs18.x
+  runtime: nodejs20.x
   region: eu-west-1
   architecture: arm64
   memorySize: 256

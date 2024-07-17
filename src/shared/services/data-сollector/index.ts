@@ -1,7 +1,7 @@
+import { randomUUID } from 'crypto';
 import { PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { randomUUID } from 'crypto';
-import { client } from '../db';
+import { client } from '@/shared/services/db';
 
 
 const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;

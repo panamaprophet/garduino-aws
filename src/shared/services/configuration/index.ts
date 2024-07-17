@@ -1,8 +1,8 @@
+import { randomUUID, UUID } from 'crypto';
 import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { client } from '../db';
-import { getTimeRelativeConfiguration } from '../../helpers';
-import { randomUUID, UUID } from 'crypto';
+import { client } from '@/shared/services/db';
+import { getTimeRelativeConfiguration } from '@/shared/helpers';
 
 interface Configuration {
     ownerId: UUID;

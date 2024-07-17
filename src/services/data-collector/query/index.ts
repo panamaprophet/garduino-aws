@@ -1,6 +1,6 @@
 import { APIGatewayEvent } from 'aws-lambda';
-import { handleResponse } from '../../../shared/helpers';
-import { getControllerEvents } from '../../../shared/services/data-сollector';
+import { handleResponse } from '@/shared/helpers';
+import { getControllerEvents } from '@/shared/services/data-сollector';
 
 
 export const handler = async (event: APIGatewayEvent) => {

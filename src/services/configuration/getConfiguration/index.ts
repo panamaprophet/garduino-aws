@@ -1,6 +1,6 @@
 import { APIGatewayEvent } from 'aws-lambda';
-import { handleResponse } from '../../../shared/helpers';
-import { getControllerConfiguration, getControllerConfigurationRaw } from '../../../shared/services/configuration';
+import { handleResponse } from '@/shared/helpers';
+import { getControllerConfiguration, getControllerConfigurationRaw } from '@/shared/services/configuration';
 
 
 export const handler = async (event: APIGatewayEvent) => {
