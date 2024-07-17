@@ -43,34 +43,3 @@ export const attachPolicy = (policyName: string, target: string) => {
 export const attachThingPrincipal = (thingName: string, principal: string) => {
     return client.send(new AttachThingPrincipalCommand({ thingName, principal }));
 };
-
-export const createController = async (controllerId: UUID) => {
-    const thing = await createThing(controllerId);
-
-    console.log('thing created:', thing);
-
-    const certificates = await createCertificates();
-    const controllerRootCert = await getRootCACertificate();
-
-    const controllerCertPem = certificates.certificatePem;
-    const controllerPublicKey = certificates.keyPair?.PublicKey;
-    const controllerPrivateKey = certificates.keyPair?.PrivateKey;
-
-    console.log('certificates:', { controllerRootCert, controllerCertPem, controllerPublicKey, controllerPrivateKey });
-
-    const policy = await createMqttPolicy(controllerId);
-
-    await attachPolicy(policy.policyName!, certificates.certificateArn!);
-    await attachThingPrincipal(controllerId, certificates.certificateArn!);
-
-    return {
-        id: controllerId,
-        arn: thing.thingArn,
-        certificates: {
-            root: controllerRootCert,
-            pem: controllerCertPem,
-            publicKey: controllerPublicKey,
-            privateKey: controllerPrivateKey,
-        },
-    };
-};
