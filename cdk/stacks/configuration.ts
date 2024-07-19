@@ -149,6 +149,9 @@ export class CdkStack extends Stack {
       integration: new HttpLambdaIntegration(`${this.stackName}-api-get-configuration`, this.get),
     });
 
-    new CfnOutput(this, 'endpoint', { value: String(this.api.url) });
+    new CfnOutput(this, 'endpoint', {
+      value: String(this.api.url),
+      exportName: `${this.stackName}:endpoint`,
+    });
   }
 }

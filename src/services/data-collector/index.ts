@@ -1,2 +1,2 @@
-export { handler as store } from './store';
-export { handler as query } from './query';
+export { handler as pushData } from './pushData';
+export { handler as queryData } from './queryData';

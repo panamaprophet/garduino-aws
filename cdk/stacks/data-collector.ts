@@ -19,7 +19,7 @@ export class CdkStack extends Stack {
     const userPoolClientId = context['userPoolClientId'];
     const issuerUrl = `https://cognito-idp.${this.region}.amazonaws.com/${userPoolId}`;
 
-    const table = new Table(this, 'data-table', {
+    const table = new Table(this, 'dataTable', {
       tableName: `${this.stackName}-table`,
       partitionKey: { name: 'id', type: AttributeType.STRING },
       sortKey: { name: 'ts', type: AttributeType.NUMBER },
@@ -46,20 +46,20 @@ export class CdkStack extends Stack {
       },
     };
 
-    const storeHandler = new NodejsFunction(this, 'storehandler', {
+    const pushDataHandler = new NodejsFunction(this, 'pushDataHandler', {
       ...commonLambdaProps,
-      handler: 'index.store',
+      handler: 'index.pushData',
       entry: join(__dirname, '../../src/services/data-collector/index.ts'),
     });
 
-    const queryHandler = new NodejsFunction(this, 'queryhandler', {
+    const queryDataHandler = new NodejsFunction(this, 'queryDataHandler', {
       ...commonLambdaProps,
-      handler: 'index.query',
+      handler: 'index.queryData',
       entry: join(__dirname, '../../src/services/data-collector/index.ts'),
     });
 
-    table.grantReadWriteData(storeHandler);
-    table.grantReadWriteData(queryHandler);
+    table.grantReadWriteData(pushDataHandler);
+    table.grantReadWriteData(queryDataHandler);
 
     const authorizer = new HttpJwtAuthorizer('authorizer', issuerUrl, { jwtAudience: [userPoolClientId] });
 
@@ -77,15 +77,18 @@ export class CdkStack extends Stack {
     api.addRoutes({
       path: '/data/{controllerId}',
       methods: [HttpMethod.PUT],
-      integration: new HttpLambdaIntegration(`${this.stackName}-api-store-handler`, storeHandler),
+      integration: new HttpLambdaIntegration(`${this.stackName}-api-pushDataHandler`, pushDataHandler),
     });
 
     api.addRoutes({
       path: '/data/{controllerId}',
       methods: [HttpMethod.GET],
-      integration: new HttpLambdaIntegration(`${this.stackName}-api-query-handler`, queryHandler),
+      integration: new HttpLambdaIntegration(`${this.stackName}-api-queryDataHandler`, queryDataHandler),
     });
 
-    new CfnOutput(this, 'endpoint', { value: String(api.url) });
+    new CfnOutput(this, 'endpoint', { 
+      value: String(api.url),
+      exportName: `${this.stackName}:endpoint`,
+    });
   }
 }
