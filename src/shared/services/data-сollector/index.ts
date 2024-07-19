@@ -1,7 +1,7 @@
+import { randomUUID } from 'crypto';
 import { PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { randomUUID } from 'crypto';
-import { client } from '../../providers/db';
+import { client } from '@/shared/services/db';
 
 
 const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
@@ -18,8 +18,8 @@ export const getControllerEvents = async (controllerId: string, options: Partial
     const limit = options.limit;
 
     const { Items } = await client.send(new QueryCommand({
-        TableName: 'data',
-        IndexName: 'controllerIdIndex',
+        TableName: String(process.env.DATA_TABLE),
+        IndexName: 'controllerId_Index',
         KeyConditionExpression: '#key = :value AND #ts BETWEEN :startDate AND :endDate',
         ExpressionAttributeNames: {
             '#key': 'controllerId',
@@ -40,7 +40,7 @@ export const getControllerEvents = async (controllerId: string, options: Partial
 
 export const addControllerEvent = async (controllerId: string, payload: { [k: string]: any }) => {
     const result = await client.send(new PutItemCommand({
-        TableName: 'data',
+        TableName: String(process.env.DATA_TABLE),
         Item: marshall({
             ...payload,
             controllerId,

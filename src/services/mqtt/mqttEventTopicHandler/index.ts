@@ -1,4 +1,4 @@
-import { decorateWithPayloadValidation, handleResponse } from '../../../shared/helpers';
+import { decorateWithPayloadValidation, handleResponse } from '@/shared/helpers';
 
 
 const getRequestUrl = (controllerId: string) => `${process.env.DATA_COLLECTOR_URL}/data/${controllerId}`;

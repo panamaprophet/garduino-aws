@@ -1,14 +1,20 @@
+import { randomUUID, UUID } from 'crypto';
 import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { client } from '../../providers/db';
-import { getTimeRelativeConfiguration } from '../../helpers';
+import { client } from '@/shared/services/db';
+import { getTimeRelativeConfiguration } from '@/shared/helpers';
 
+interface Configuration {
+    ownerId: UUID;
+    onTime: `${number}:${number}`;
+    duration: number;
+    thresholdTemperature: number;
+    fanSpeed: number;
+}
 
-// @todo: move it to process.env.CONFIGURATIONS_TABLE
-const CONFIGURATIONS_TABLE = 'configurations';
+const CONFIGURATION_TABLE = process.env.CONFIGURATION_TABLE;
 
-
-const mapConfiguration = (configuration: { [k: string]: any }) => {
+const mapConfiguration = (configuration: Configuration) => {
     const timerConfiguration = getTimeRelativeConfiguration(configuration.onTime, configuration.duration);
 
     if (!timerConfiguration) {
@@ -24,11 +30,11 @@ const mapConfiguration = (configuration: { [k: string]: any }) => {
 
 export const getControllerConfigurationRaw = async (controllerId: string) => {
     const { Item } = await client.send(new GetItemCommand({
-        TableName: CONFIGURATIONS_TABLE,
+        TableName: CONFIGURATION_TABLE,
         Key: marshall({ controllerId }),
     }));
 
-    return Item ? unmarshall(Item) : null;
+    return Item ? unmarshall(Item) as Configuration : null;
 };
 
 export const getControllerConfiguration = async (controllerId: string) => {
@@ -37,9 +43,9 @@ export const getControllerConfiguration = async (controllerId: string) => {
     return result ? mapConfiguration(result) : null;
 };
 
-export const setControllerConfiguration = async (controllerId: string, configuration: { [k: string]: any }) => {
+export const setControllerConfiguration = async (controllerId: string, configuration: Configuration) => {
     const result = await client.send(new PutItemCommand({
-        TableName: CONFIGURATIONS_TABLE,
+        TableName: CONFIGURATION_TABLE,
         Item: marshall({ controllerId, ...configuration }),
     }));
 
@@ -48,7 +54,7 @@ export const setControllerConfiguration = async (controllerId: string, configura
 
 export const removeControllerConfiguration = async (controllerId: string) => {
     const result = await client.send(new DeleteItemCommand({
-        TableName: CONFIGURATIONS_TABLE,
+        TableName: CONFIGURATION_TABLE,
         Key: marshall({ controllerId }),
     }))
 
@@ -57,8 +63,8 @@ export const removeControllerConfiguration = async (controllerId: string) => {
 
 export const getControllerIdsByOwnerId = async (ownerId: string) => {
     const result = await client.send(new QueryCommand({
-        TableName: CONFIGURATIONS_TABLE,
-        IndexName: 'ownerIdIndex',
+        TableName: CONFIGURATION_TABLE,
+        IndexName: 'ownerId_Index',
         KeyConditionExpression: '#key = :value',
         ExpressionAttributeNames: { '#key': 'ownerId' },
         ExpressionAttributeValues: { ':value': { S: ownerId } },
@@ -72,4 +78,19 @@ export const getControllerIdsByOwnerId = async (ownerId: string) => {
     return result.Items
         .map(item => unmarshall(item))
         .map(item => item.controllerId);
+};
+
+export const createConfiguration = async (controllerId: UUID, props: Partial<Configuration>) => {
+    const configuration: Configuration = {
+        ownerId: randomUUID(),
+        onTime: '12:00',
+        duration: 43200000,
+        thresholdTemperature: 30,
+        fanSpeed: 125,
+        ...props,
+    };
+
+    await setControllerConfiguration(controllerId, configuration);
+
+    return { controllerId, ...configuration };
 };

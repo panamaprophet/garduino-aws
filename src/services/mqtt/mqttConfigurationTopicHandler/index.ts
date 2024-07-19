@@ -1,5 +1,5 @@
-import { decorateWithPayloadValidation, handleResponse } from '../../../shared/helpers';
-import { publish } from "../../../shared/resolvers/mqtt";
+import { decorateWithPayloadValidation, handleResponse } from '@/shared/helpers';
+import { publish } from '@/shared/services/mqtt';
 
 
 const getRequestUrl = (controllerId: string) => `${process.env.CONTROLLER_CONFIGURATION_URL}/configuration/${controllerId}`;
