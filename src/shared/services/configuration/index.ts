@@ -12,10 +12,7 @@ interface Configuration {
     fanSpeed: number;
 }
 
-
-// @todo: move it to process.env.CONFIGURATIONS_TABLE
-const CONFIGURATIONS_TABLE = 'configurations';
-
+const CONFIGURATION_TABLE = process.env.CONFIGURATION_TABLE;
 
 const mapConfiguration = (configuration: Configuration) => {
     const timerConfiguration = getTimeRelativeConfiguration(configuration.onTime, configuration.duration);
@@ -33,7 +30,7 @@ const mapConfiguration = (configuration: Configuration) => {
 
 export const getControllerConfigurationRaw = async (controllerId: string) => {
     const { Item } = await client.send(new GetItemCommand({
-        TableName: CONFIGURATIONS_TABLE,
+        TableName: CONFIGURATION_TABLE,
         Key: marshall({ controllerId }),
     }));
 
@@ -48,7 +45,7 @@ export const getControllerConfiguration = async (controllerId: string) => {
 
 export const setControllerConfiguration = async (controllerId: string, configuration: Configuration) => {
     const result = await client.send(new PutItemCommand({
-        TableName: CONFIGURATIONS_TABLE,
+        TableName: CONFIGURATION_TABLE,
         Item: marshall({ controllerId, ...configuration }),
     }));
 
@@ -57,7 +54,7 @@ export const setControllerConfiguration = async (controllerId: string, configura
 
 export const removeControllerConfiguration = async (controllerId: string) => {
     const result = await client.send(new DeleteItemCommand({
-        TableName: CONFIGURATIONS_TABLE,
+        TableName: CONFIGURATION_TABLE,
         Key: marshall({ controllerId }),
     }))
 
@@ -66,8 +63,8 @@ export const removeControllerConfiguration = async (controllerId: string) => {
 
 export const getControllerIdsByOwnerId = async (ownerId: string) => {
     const result = await client.send(new QueryCommand({
-        TableName: CONFIGURATIONS_TABLE,
-        IndexName: 'ownerIdIndex',
+        TableName: CONFIGURATION_TABLE,
+        IndexName: 'ownerId_Index',
         KeyConditionExpression: '#key = :value',
         ExpressionAttributeNames: { '#key': 'ownerId' },
         ExpressionAttributeValues: { ':value': { S: ownerId } },

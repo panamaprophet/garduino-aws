@@ -17,6 +17,10 @@
     ]
   },
   "context": {
+    "props": {
+      "userPoolId": "eu-west-1_MAoQKQvl6",
+      "userPoolClientId": "47p8pab9u6kfoq8oftft97p8am"
+    },
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": [
