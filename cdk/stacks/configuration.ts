@@ -8,14 +8,18 @@ import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { NodejsFunction, NodejsFunctionProps, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
+import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
 
 export class CdkStack extends Stack {
   api: HttpApi;
+
   get: NodejsFunction;
   list: NodejsFunction;
   create: NodejsFunction;
   remove: NodejsFunction;
   update: NodejsFunction;
+
+  configurationTable: Table;
 
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
@@ -26,14 +30,14 @@ export class CdkStack extends Stack {
     const userPoolClientId = context['userPoolClientId'];
     const issuerUrl = `https://cognito-idp.${this.region}.amazonaws.com/${userPoolId}`;
 
-    const configurationTable = new Table(this, 'configurationTable', {
+    this.configurationTable = new Table(this, 'configurationTable', {
       tableName: `${this.stackName}-table`,
       partitionKey: { name: 'controllerId', type: AttributeType.STRING },
       readCapacity: 1,
       writeCapacity: 1,
     });
 
-    configurationTable.addGlobalSecondaryIndex({
+    this.configurationTable.addGlobalSecondaryIndex({
       indexName: 'ownerId_Index',
       partitionKey: { name: 'ownerId', type: AttributeType.STRING },
       sortKey: { name: 'controllerId', type: AttributeType.STRING },
@@ -54,9 +58,13 @@ export class CdkStack extends Stack {
     });
 
     const commonLambdaProps: Partial<NodejsFunctionProps> = {
-      bundling: { minify: true },
+      runtime: Runtime.NODEJS_20_X,
+      architecture: Architecture.ARM_64,
+      bundling: {
+        minify: true,
+      },
       environment: {
-        CONFIGURATION_TABLE: configurationTable.tableName,
+        CONFIGURATION_TABLE: this.configurationTable.tableName,
       },
     };
 
@@ -92,11 +100,11 @@ export class CdkStack extends Stack {
       entry: join(__dirname, '../../src/services/configuration/index.ts'),
     });
 
-    configurationTable.grantReadWriteData(this.get);
-    configurationTable.grantReadWriteData(this.list);
-    configurationTable.grantReadWriteData(this.create);
-    configurationTable.grantReadWriteData(this.update);
-    configurationTable.grantReadWriteData(this.remove);
+    this.configurationTable.grantReadWriteData(this.get);
+    this.configurationTable.grantReadWriteData(this.list);
+    this.configurationTable.grantReadWriteData(this.create);
+    this.configurationTable.grantReadWriteData(this.update);
+    this.configurationTable.grantReadWriteData(this.remove);
 
     const authorizer = new HttpJwtAuthorizer('authorizer', issuerUrl, { jwtAudience: [userPoolClientId] });
 
