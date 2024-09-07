@@ -6,7 +6,6 @@ import {
     CreateKeysAndCertificateCommand,
     IoTClient,
 } from '@aws-sdk/client-iot';
-import { UUID } from 'crypto';
 
 export const client = new IoTClient();
 

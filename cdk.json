@@ -1,5 +1,5 @@
 {
-  "app": "npx ts-node --prefer-ts-exts ./app.ts",
+  "app": "npx ts-node --prefer-ts-exts ./cdk/app.ts",
   "watch": {
     "include": [
       "**"
@@ -19,7 +19,7 @@
   "context": {
     "props": {
       "userPoolId": "eu-west-1_MAoQKQvl6",
-      "userPoolClientId": "47p8pab9u6kfoq8oftft97p8am"
+      "userPoolClientId": "1lkkp84gvib70rerrnjhol7rl6"
     },
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,

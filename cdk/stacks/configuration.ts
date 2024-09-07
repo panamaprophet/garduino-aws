@@ -1,12 +1,12 @@
 import { join } from 'path';
-import { Stack, StackProps, CfnOutput, Duration } from 'aws-cdk-lib';
-import { Cors, HttpIntegration } from 'aws-cdk-lib/aws-apigateway';
-import { CorsHttpMethod, HttpApi, HttpMethod, IIntegration } from 'aws-cdk-lib/aws-apigatewayv2';
+import { Stack, StackProps, CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
+import { Cors } from 'aws-cdk-lib/aws-apigateway';
+import { CorsHttpMethod, HttpApi, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpJwtAuthorizer } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
-import { NodejsFunction, NodejsFunctionProps, OutputFormat } from 'aws-cdk-lib/aws-lambda-nodejs';
+import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
 import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
 
@@ -35,6 +35,7 @@ export class CdkStack extends Stack {
       partitionKey: { name: 'controllerId', type: AttributeType.STRING },
       readCapacity: 1,
       writeCapacity: 1,
+      removalPolicy: RemovalPolicy.DESTROY,
     });
 
     this.configurationTable.addGlobalSecondaryIndex({
@@ -120,31 +121,31 @@ export class CdkStack extends Stack {
     });
 
     this.api.addRoutes({
-      path: '/configuration',
+      path: '/',
       methods: [HttpMethod.GET],
       integration: new HttpLambdaIntegration(`${this.stackName}-api-list-configurations`, this.list),
     });
 
     this.api.addRoutes({
-      path: '/configuration',
+      path: '/',
       methods: [HttpMethod.POST],
       integration: new HttpLambdaIntegration(`${this.stackName}-api-create-configuration`, this.create),
     });
 
     this.api.addRoutes({
-      path: '/configuration/{controllerId}',
+      path: '/{controllerId}',
       methods: [HttpMethod.PUT],
       integration: new HttpLambdaIntegration(`${this.stackName}-api-update-configuration`, this.update),
     });
 
     this.api.addRoutes({
-      path: '/configuration/{controllerId}',
+      path: '/{controllerId}',
       methods: [HttpMethod.DELETE],
       integration: new HttpLambdaIntegration(`${this.stackName}-api-remove-configuration`, this.remove),
     });
 
     this.api.addRoutes({
-      path: '/configuration/{controllerId}',
+      path: '/{controllerId}',
       methods: [HttpMethod.GET],
       integration: new HttpLambdaIntegration(`${this.stackName}-api-get-configuration`, this.get),
     });
