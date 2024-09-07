@@ -1,7 +1,38 @@
 import { CfnOutput, Fn, Stack, StackProps } from 'aws-cdk-lib';
-import { Cors, HttpIntegration, PassthroughBehavior, RestApi } from 'aws-cdk-lib/aws-apigateway';
+import { Cors, HttpIntegration, PassthroughBehavior, Resource, RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
 import { Construct } from 'constructs';
+
+const addProxyIntegration = (resource: Resource, serviceUrl: string) => {
+    resource
+        .addMethod(
+            HttpMethod.ANY,
+            new HttpIntegration(serviceUrl, {
+                httpMethod: HttpMethod.ANY,
+                options: { passthroughBehavior: PassthroughBehavior.WHEN_NO_MATCH },
+            })
+        );
+
+    resource
+        .addResource('{proxy+}')
+        .addMethod(
+            HttpMethod.ANY,
+            new HttpIntegration(`${serviceUrl}{proxy}`, {
+                httpMethod: HttpMethod.ANY,
+                options: {
+                    passthroughBehavior: PassthroughBehavior.WHEN_NO_MATCH,
+                    requestParameters: {
+                        'integration.request.path.proxy': 'method.request.path.proxy',
+                    },
+                },
+            }),
+            {
+                requestParameters: {
+                    'method.request.path.proxy': true,
+                },
+            }
+        );
+};
 
 export class CdkStack extends Stack {
     constructor(scope: Construct, id: string, props: StackProps) {
@@ -24,59 +55,10 @@ export class CdkStack extends Stack {
         const configurations = v1.addResource('configurations');
         const data = v1.addResource('data');
 
-        configurations
-            .addMethod(HttpMethod.ANY, new HttpIntegration(configurationApiEndpoint, {
-                httpMethod: HttpMethod.ANY,
-                options: { passthroughBehavior: PassthroughBehavior.WHEN_NO_MATCH },
-            }));
+        addProxyIntegration(configurations, configurationApiEndpoint);
+        addProxyIntegration(data, dataCollectorApiEndpoint);
 
-        configurations
-            .addResource('{proxy+}')
-            .addMethod(
-                HttpMethod.ANY,
-                new HttpIntegration(`${configurationApiEndpoint}{proxy}`, {
-                    httpMethod: HttpMethod.ANY,
-                    options: {
-                        passthroughBehavior: PassthroughBehavior.WHEN_NO_MATCH,
-                        requestParameters: {
-                            'integration.request.path.proxy': 'method.request.path.proxy',
-                        },
-                    },
-                }),
-                {
-                    requestParameters: {
-                        'method.request.path.proxy': true,
-                    },
-                }
-            );
-
-        data
-            .addMethod(HttpMethod.ANY, new HttpIntegration(dataCollectorApiEndpoint, {
-                httpMethod: HttpMethod.ANY,
-                options: { passthroughBehavior: PassthroughBehavior.WHEN_NO_MATCH },
-            }));
-
-        data
-            .addResource('{proxy+}')
-            .addMethod(
-                HttpMethod.ANY,
-                new HttpIntegration(`${dataCollectorApiEndpoint}{proxy}`, {
-                    httpMethod: HttpMethod.ANY,
-                    options: {
-                        passthroughBehavior: PassthroughBehavior.WHEN_NO_MATCH,
-                        requestParameters: {
-                            'integration.request.path.proxy': 'method.request.path.proxy',
-                        },
-                    },
-                }),
-                {
-                    requestParameters: {
-                        'method.request.path.proxy': true,
-                    },
-                }
-            );
-
-        new CfnOutput(this, 'http-proxy-endpoint', {
+        new CfnOutput(this, 'endpoint', {
             value: api.url,
             exportName: `${this.stackName}:endpoint`,
         });
