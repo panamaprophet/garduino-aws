@@ -8,7 +8,7 @@ export const handler = async (event: APIGatewayProxyEventBase<APIGatewayEventReq
     const { authorizer } = requestContext;
     const { jwt } = authorizer;
 
-    const userId = String(jwt.claims.sub);
+    const userId = jwt.claims.sub;
 
     if (!userId) {
         return handleResponse({ message: 'no user found' }, 401);

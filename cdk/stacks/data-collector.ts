@@ -1,7 +1,7 @@
 import { join } from 'path';
 import { Construct } from 'constructs';
 import { Cors } from 'aws-cdk-lib/aws-apigateway';
-import { CfnOutput, Duration, Stack, StackProps } from 'aws-cdk-lib';
+import { CfnOutput, Duration, RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import { CorsHttpMethod, HttpApi, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpJwtAuthorizer } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
@@ -25,6 +25,7 @@ export class CdkStack extends Stack {
       sortKey: { name: 'ts', type: AttributeType.NUMBER },
       readCapacity: 1,
       writeCapacity: 1,
+      removalPolicy: RemovalPolicy.DESTROY,
     });
 
     table.addGlobalSecondaryIndex({
@@ -75,13 +76,13 @@ export class CdkStack extends Stack {
     });
 
     api.addRoutes({
-      path: '/data/{controllerId}',
+      path: '/{controllerId}',
       methods: [HttpMethod.PUT],
       integration: new HttpLambdaIntegration(`${this.stackName}-api-pushDataHandler`, pushDataHandler),
     });
 
     api.addRoutes({
-      path: '/data/{controllerId}',
+      path: '/{controllerId}',
       methods: [HttpMethod.GET],
       integration: new HttpLambdaIntegration(`${this.stackName}-api-queryDataHandler`, queryDataHandler),
     });
