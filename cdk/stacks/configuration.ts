@@ -83,6 +83,7 @@ export class CdkStack extends Stack {
 
     this.create = new NodejsFunction(this, 'createConfiguration', {
       ...commonLambdaProps,
+      memorySize: 256,
       initialPolicy: [iotPolicy],
       handler: 'index.createConfiguration',
       entry: join(__dirname, '../../src/services/configuration/index.ts'),
