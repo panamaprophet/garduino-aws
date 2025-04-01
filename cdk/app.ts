@@ -8,14 +8,19 @@ import { CdkStack as DataCollectorStack } from './stacks/data-collector';
 import { CdkStack as MqttProxyStack } from './stacks/mqtt-proxy';
 import { CdkStack as HttpProxyStack } from './stacks/http-proxy';
 
-const app = new App();
+if (!process.env.GIT_COMMIT_HASH) {
+    throw Error('Invalid Git Commit Hash');
+}
 
 const props: StackProps = {
     env: {
         account: process.env.CDK_DEFAULT_ACCOUNT,
         region: process.env.CDK_DEFAULT_REGION,
     },
+    stackName: `garduino-${process.env.GIT_COMMIT_HASH}`,
 };
+
+const app = new App();
 
 new ConfigurationStack(app, 'garduino-configuration', props);
 new DataCollectorStack(app, 'garduino-data-collector', props);

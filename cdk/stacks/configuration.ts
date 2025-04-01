@@ -25,13 +25,14 @@ export class CdkStack extends Stack {
     super(scope, id, props);
 
     const context = this.node.getContext('props');
+    const { stackName } = Stack.of(this);
 
     const userPoolId = context['userPoolId'];
     const userPoolClientId = context['userPoolClientId'];
     const issuerUrl = `https://cognito-idp.${this.region}.amazonaws.com/${userPoolId}`;
 
     this.configurationTable = new Table(this, 'configurationTable', {
-      tableName: `${this.stackName}-table`,
+      tableName: `${stackName}-configuration-table`,
       partitionKey: { name: 'controllerId', type: AttributeType.STRING },
       readCapacity: 1,
       writeCapacity: 1,
@@ -58,6 +59,12 @@ export class CdkStack extends Stack {
       resources: ['*'],
     });
 
+    const dbPolicy = new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['dynamodb:*'],
+      resources: [this.configurationTable.tableArn],
+    });
+
     const commonLambdaProps: Partial<NodejsFunctionProps> = {
       runtime: Runtime.NODEJS_20_X,
       architecture: Architecture.ARM_64,
@@ -67,6 +74,7 @@ export class CdkStack extends Stack {
       environment: {
         CONFIGURATION_TABLE: this.configurationTable.tableName,
       },
+      initialPolicy: [dbPolicy],
     };
 
     this.get = new NodejsFunction(this, 'getConfiguration', {
@@ -84,14 +92,14 @@ export class CdkStack extends Stack {
     this.create = new NodejsFunction(this, 'createConfiguration', {
       ...commonLambdaProps,
       memorySize: 256,
-      initialPolicy: [iotPolicy],
+      initialPolicy: [iotPolicy, dbPolicy],
       handler: 'index.createConfiguration',
       entry: join(__dirname, '../../src/services/configuration/index.ts'),
     });
 
     this.remove = new NodejsFunction(this, 'removeRonfiguration', {
       ...commonLambdaProps,
-      initialPolicy: [iotPolicy],
+      initialPolicy: [iotPolicy, dbPolicy],
       handler: 'index.removeConfiguration',
       entry: join(__dirname, '../../src/services/configuration/index.ts'),
     });
@@ -102,58 +110,52 @@ export class CdkStack extends Stack {
       entry: join(__dirname, '../../src/services/configuration/index.ts'),
     });
 
-    this.configurationTable.grantReadWriteData(this.get);
-    this.configurationTable.grantReadWriteData(this.list);
-    this.configurationTable.grantReadWriteData(this.create);
-    this.configurationTable.grantReadWriteData(this.update);
-    this.configurationTable.grantReadWriteData(this.remove);
-
-    const authorizer = new HttpJwtAuthorizer('authorizer', issuerUrl, { jwtAudience: [userPoolClientId] });
+    // const authorizer = new HttpJwtAuthorizer('authorizer', issuerUrl, { jwtAudience: [userPoolClientId] });
 
     this.api = new HttpApi(this, `httpApi`, {
-      apiName: `${this.stackName}-api`,
+      apiName: `${stackName}-api`,
       corsPreflight: {
         allowOrigins: Cors.ALL_ORIGINS,
         allowHeaders: Cors.DEFAULT_HEADERS,
         allowMethods: [CorsHttpMethod.ANY],
         maxAge: Duration.seconds(500),
       },
-      defaultAuthorizer: authorizer,
+      // defaultAuthorizer: authorizer,
     });
 
     this.api.addRoutes({
       path: '/',
       methods: [HttpMethod.GET],
-      integration: new HttpLambdaIntegration(`${this.stackName}-api-list-configurations`, this.list),
+      integration: new HttpLambdaIntegration(`${stackName}-api-list-configurations`, this.list),
     });
 
     this.api.addRoutes({
       path: '/',
       methods: [HttpMethod.POST],
-      integration: new HttpLambdaIntegration(`${this.stackName}-api-create-configuration`, this.create),
+      integration: new HttpLambdaIntegration(`${stackName}-api-create-configuration`, this.create),
     });
 
     this.api.addRoutes({
       path: '/{controllerId}',
       methods: [HttpMethod.PUT],
-      integration: new HttpLambdaIntegration(`${this.stackName}-api-update-configuration`, this.update),
+      integration: new HttpLambdaIntegration(`${stackName}-api-update-configuration`, this.update),
     });
 
     this.api.addRoutes({
       path: '/{controllerId}',
       methods: [HttpMethod.DELETE],
-      integration: new HttpLambdaIntegration(`${this.stackName}-api-remove-configuration`, this.remove),
+      integration: new HttpLambdaIntegration(`${stackName}-api-remove-configuration`, this.remove),
     });
 
     this.api.addRoutes({
       path: '/{controllerId}',
       methods: [HttpMethod.GET],
-      integration: new HttpLambdaIntegration(`${this.stackName}-api-get-configuration`, this.get),
+      integration: new HttpLambdaIntegration(`${stackName}-api-get-configuration`, this.get),
     });
 
     new CfnOutput(this, 'endpoint', {
       value: String(this.api.url),
-      exportName: `${this.stackName}:endpoint`,
+      exportName: `${stackName}:endpoint`,
     });
   }
 }

@@ -16,6 +16,8 @@ export class CdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
+    const { stackName } = Stack.of(this);
+
     const iotPolicy = new PolicyStatement({
       effect: Effect.ALLOW,
       actions: ['iot:Publish', 'iot:Connect'],
@@ -78,7 +80,7 @@ export class CdkStack extends Stack {
 
     new CfnOutput(this, 'endpoint', {
       value: String(iotDataEndpoint.getResponseField('endpointAddress')),
-      exportName: `${this.stackName}:endpoint`,
+      exportName: `${stackName}:endpoint`,
     });
   }
 }

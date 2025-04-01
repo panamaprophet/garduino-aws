@@ -14,13 +14,14 @@ export class CdkStack extends Stack {
     super(scope, id, props);
 
     const context = this.node.getContext('props');
+    const { stackName } = Stack.of(this);
 
     const userPoolId = context['userPoolId'];
     const userPoolClientId = context['userPoolClientId'];
     const issuerUrl = `https://cognito-idp.${this.region}.amazonaws.com/${userPoolId}`;
 
     const table = new Table(this, 'dataTable', {
-      tableName: `${this.stackName}-table`,
+      tableName: `${stackName}-data-table`,
       partitionKey: { name: 'id', type: AttributeType.STRING },
       sortKey: { name: 'ts', type: AttributeType.NUMBER },
       readCapacity: 1,
@@ -62,34 +63,34 @@ export class CdkStack extends Stack {
     table.grantReadWriteData(pushDataHandler);
     table.grantReadWriteData(queryDataHandler);
 
-    const authorizer = new HttpJwtAuthorizer('authorizer', issuerUrl, { jwtAudience: [userPoolClientId] });
+    // const authorizer = new HttpJwtAuthorizer('authorizer', issuerUrl, { jwtAudience: [userPoolClientId] });
 
     const api = new HttpApi(this, 'api', {
-      apiName: `${this.stackName}-api`,
+      apiName: `${stackName}-api`,
       corsPreflight: {
         allowOrigins: Cors.ALL_ORIGINS,
         allowHeaders: Cors.DEFAULT_HEADERS,
         allowMethods: [CorsHttpMethod.ANY],
         maxAge: Duration.seconds(500),
       },
-      defaultAuthorizer: authorizer,
+      // defaultAuthorizer: authorizer,
     });
 
     api.addRoutes({
       path: '/{controllerId}',
       methods: [HttpMethod.PUT],
-      integration: new HttpLambdaIntegration(`${this.stackName}-api-pushDataHandler`, pushDataHandler),
+      integration: new HttpLambdaIntegration(`${stackName}-api-pushDataHandler`, pushDataHandler),
     });
 
     api.addRoutes({
       path: '/{controllerId}',
       methods: [HttpMethod.GET],
-      integration: new HttpLambdaIntegration(`${this.stackName}-api-queryDataHandler`, queryDataHandler),
+      integration: new HttpLambdaIntegration(`${stackName}-api-queryDataHandler`, queryDataHandler),
     });
 
     new CfnOutput(this, 'endpoint', { 
       value: String(api.url),
-      exportName: `${this.stackName}:endpoint`,
+      exportName: `${stackName}:endpoint`,
     });
   }
 }

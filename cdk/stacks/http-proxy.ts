@@ -38,6 +38,8 @@ export class CdkStack extends Stack {
     constructor(scope: Construct, id: string, props: StackProps) {
         super(scope, id, props);
 
+        const { stackName } = Stack.of(this);
+
         const configurationApiEndpoint = Fn.importValue('garduino-configuration:endpoint');
         const dataCollectorApiEndpoint = Fn.importValue('garduino-data-collector:endpoint');
 
@@ -60,7 +62,7 @@ export class CdkStack extends Stack {
 
         new CfnOutput(this, 'endpoint', {
             value: api.url,
-            exportName: `${this.stackName}:endpoint`,
+            exportName: `${stackName}:endpoint`,
         });
     }
 }
