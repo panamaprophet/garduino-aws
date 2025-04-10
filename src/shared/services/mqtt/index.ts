@@ -2,7 +2,7 @@ import { IoTDataPlaneClient, PublishCommand } from '@aws-sdk/client-iot-data-pla
 
 export const client = new IoTDataPlaneClient({});
 
-export const publish = (topic: string, payload: { [k: string]: any }) => {
+export const publish = <T>(topic: string, payload: T) => {
     return client.send(new PublishCommand({
         topic,
         payload: Buffer.from(JSON.stringify(payload)),

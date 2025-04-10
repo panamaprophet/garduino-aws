@@ -1,20 +1,14 @@
 import { decorateWithPayloadValidation, handleResponse } from '@/shared/helpers';
+import { addControllerEvent } from '@/shared/services/data-сollector';
 
-
-const getRequestUrl = (controllerId: string) => `${process.env.DATA_COLLECTOR_URL}/data/${controllerId}`;
-
-
-const _handler = async (event: { controllerId: string, [k: string]: any }) => {
+const _handler = async (event: { controllerId: string, [k: string]: unknown }) => {
     const { controllerId, ...payload } = event;
-    const requestUrl = getRequestUrl(controllerId);
 
-    const result = await fetch(requestUrl, {
-        method: 'PUT',
-        body: JSON.stringify(payload),
-    });
+    const result = await addControllerEvent(controllerId, payload);
+
+    console.log('result:', { result });
 
     return handleResponse({ success: result });
 };
-
 
 export const handler = decorateWithPayloadValidation(_handler);

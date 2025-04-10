@@ -19,7 +19,7 @@
   "context": {
     "props": {
       "userPoolId": "eu-west-1_MAoQKQvl6",
-      "userPoolClientId": "1lkkp84gvib70rerrnjhol7rl6"
+      "userPoolClientIds": ["1lkkp84gvib70rerrnjhol7rl6"]
     },
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
