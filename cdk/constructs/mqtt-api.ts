@@ -1,10 +1,11 @@
+import { join } from 'path';
+import { Construct } from 'constructs';
 import { Duration } from 'aws-cdk-lib';
-import { PolicyStatement, Effect, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { CfnTopicRule } from 'aws-cdk-lib/aws-iot';
 import { Runtime, Architecture } from 'aws-cdk-lib/aws-lambda';
+import { ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { NodejsFunctionProps, NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
-import { Construct } from 'constructs';
-import { join } from 'path';
+import { dbPolicy, iotPolicy } from '../policies';
 
 export class Mqtt extends Construct {
     eventTopic: CfnTopicRule;
@@ -13,28 +14,25 @@ export class Mqtt extends Construct {
     eventTopicHandler: NodejsFunction;
     configurationTopicHandler: NodejsFunction;
 
-    constructor(scope: Construct, id: string) {
+    constructor(scope: Construct, id: string, props: { configurationTable: string; dataTable: string }) {
         super(scope, id);
 
-        const iotPolicy = new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: ['iot:Publish', 'iot:Connect'],
-            resources: ['*'],
-        });
-
         const commonLambdaProps: Partial<NodejsFunctionProps> = {
-            initialPolicy: [iotPolicy],
+            initialPolicy: [iotPolicy, dbPolicy],
             runtime: Runtime.NODEJS_20_X,
             architecture: Architecture.ARM_64,
             bundling: { minify: true },
             timeout: Duration.seconds(60),
-            environment: {},
+            environment: {
+                DATA_TABLE: props.dataTable,
+                CONFIGURATION_TABLE: props.configurationTable,
+            },
         };
 
         this.configurationTopicHandler = new NodejsFunction(this, 'configurationTopicHandler', {
             ...commonLambdaProps,
             handler: 'index.mqttConfigurationTopicHandler',
-            entry: join(__dirname, '../src/services/mqtt/index.ts'),
+            entry: join(__dirname, '../../src/services/mqtt/index.ts'),
         });
 
         this.configurationTopic = new CfnTopicRule(this, 'configurationTopicRule', {
@@ -47,7 +45,7 @@ export class Mqtt extends Construct {
         this.eventTopicHandler = new NodejsFunction(this, 'eventTopicHandler', {
             ...commonLambdaProps,
             handler: 'index.mqttEventTopicHandler',
-            entry: join(__dirname, '../src/services/mqtt/index.ts'),
+            entry: join(__dirname, '../../src/services/mqtt/index.ts'),
         });
 
         this.eventTopic = new CfnTopicRule(this, 'eventTopicRule', {

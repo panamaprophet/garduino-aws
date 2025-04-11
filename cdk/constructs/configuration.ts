@@ -1,10 +1,10 @@
+import { join } from 'path';
+import { Construct } from 'constructs';
 import { Stack, RemovalPolicy } from 'aws-cdk-lib';
 import { Table, AttributeType } from 'aws-cdk-lib/aws-dynamodb';
-import { PolicyStatement, Effect } from 'aws-cdk-lib/aws-iam';
 import { Runtime, Architecture } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunctionProps, NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
-import { Construct } from 'constructs';
-import { join } from 'path';
+import { dbPolicy, iotAdminPolicy } from '../policies';
 
 export class Configuration extends Construct {
     table: Table;
@@ -36,24 +36,6 @@ export class Configuration extends Construct {
             writeCapacity: 1,
         });
 
-        const adminIoTPolicy = new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: [
-                'iot:AttachPolicy',
-                'iot:AttachThingPrincipal',
-                'iot:CreateKeysAndCertificate',
-                'iot:CreatePolicy',
-                'iot:CreateThing',
-            ],
-            resources: ['*'],
-        });
-
-        const dbPolicy = new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: ['dynamodb:*'],
-            resources: [this.table.tableArn, `${this.table.tableArn}/index/ownerId_Index`],
-        });
-
         const commonLambdaProps: Partial<NodejsFunctionProps> = {
             runtime: Runtime.NODEJS_20_X,
             architecture: Architecture.ARM_64,
@@ -64,35 +46,40 @@ export class Configuration extends Construct {
 
         this.get = new NodejsFunction(this, 'getConfiguration', {
             ...commonLambdaProps,
+            functionName: `${stackName}-get-configuration`,
             handler: 'index.getConfiguration',
-            entry: join(__dirname, '../src/services/configuration/index.ts'),
+            entry: join(__dirname, '../../src/services/configuration/index.ts'),
         });
 
         this.list = new NodejsFunction(this, 'listConfigurations', {
             ...commonLambdaProps,
+            functionName: `${stackName}-list-configurations`,
             handler: 'index.listConfigurations',
-            entry: join(__dirname, '../src/services/configuration/index.ts'),
+            entry: join(__dirname, '../../src/services/configuration/index.ts'),
         });
 
         this.create = new NodejsFunction(this, 'createConfiguration', {
             ...commonLambdaProps,
+            functionName: `${stackName}-create-configuration`,
             memorySize: 256,
-            initialPolicy: [adminIoTPolicy, dbPolicy],
+            initialPolicy: [iotAdminPolicy, dbPolicy],
             handler: 'index.createConfiguration',
-            entry: join(__dirname, '../src/services/configuration/index.ts'),
+            entry: join(__dirname, '../../src/services/configuration/index.ts'),
         });
 
         this.remove = new NodejsFunction(this, 'removeRonfiguration', {
             ...commonLambdaProps,
-            initialPolicy: [adminIoTPolicy, dbPolicy],
+            functionName: `${stackName}-remove-configuration`,
+            initialPolicy: [iotAdminPolicy, dbPolicy],
             handler: 'index.removeConfiguration',
-            entry: join(__dirname, '../src/services/configuration/index.ts'),
+            entry: join(__dirname, '../../src/services/configuration/index.ts'),
         });
 
         this.update = new NodejsFunction(this, 'updateConfiguration', {
             ...commonLambdaProps,
+            functionName: `${stackName}-update-configuration`,
             handler: 'index.updateConfiguration',
-            entry: join(__dirname, '../src/services/configuration/index.ts'),
+            entry: join(__dirname, '../../src/services/configuration/index.ts'),
         });
     }
 }

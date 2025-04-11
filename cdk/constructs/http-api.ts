@@ -1,10 +1,10 @@
+import { Construct } from 'constructs';
 import { Duration, Stack } from 'aws-cdk-lib';
 import { Cors } from 'aws-cdk-lib/aws-apigateway';
-import { HttpApi, CorsHttpMethod, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
+import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { HttpJwtAuthorizer } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
-import { IFunction } from 'aws-cdk-lib/aws-lambda';
-import { Construct } from 'constructs';
+import { HttpApi, CorsHttpMethod, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
 
 export class Api extends Construct {
     api: HttpApi;
@@ -15,7 +15,6 @@ export class Api extends Construct {
         const { stackName, region } = Stack.of(this);
 
         const context = this.node.getContext('props');
-
 
         const userPoolId = context['userPoolId'];
         const userPoolClientIds = context['userPoolClientIds'];
@@ -37,7 +36,7 @@ export class Api extends Construct {
 
     addRoute(path: string, handler: IFunction, options: { method: HttpMethod } = { method: HttpMethod.GET }) {
         const { stackName } = Stack.of(this);
-        const name = handler.functionName;
+        const name = path.replace(/\W/g, '');
 
         this.api.addRoutes({
             path,
