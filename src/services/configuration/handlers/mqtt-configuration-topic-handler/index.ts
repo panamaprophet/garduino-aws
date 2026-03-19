@@ -1,7 +1,7 @@
 import { decorateWithPayloadValidation } from '@/lib/request';
 import { handleResponse } from '@/lib/response';
 import { publish } from '@/lib/mqtt';
-import { getControllerConfiguration } from '../lib';
+import { getControllerConfiguration } from '../../lib';
 
 const _handler = async (event: { controllerId: string }) => {
     const { controllerId } = event;

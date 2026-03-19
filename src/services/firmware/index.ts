@@ -1,2 +1,2 @@
-export { handler as list } from './list';
-export { handler as getFirmwareDownloadUrl } from './get-firmware-download-url';
+export { handler as list } from './handlers/list';
+export { handler as getFirmwareDownloadUrl } from './handlers/get-firmware-download-url';

@@ -1,6 +1,6 @@
 import { APIGatewayEventRequestContextJWTAuthorizer, APIGatewayProxyEventBase } from 'aws-lambda';
 import { handleResponse } from '@/lib/response';
-import { getControllerIdsByOwnerId } from '../lib';
+import { getControllerIdsByOwnerId } from '../../lib';
 
 
 export const handler = async (event: APIGatewayProxyEventBase<APIGatewayEventRequestContextJWTAuthorizer>) => {
