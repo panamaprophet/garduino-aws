@@ -4,7 +4,7 @@ import { Stack, RemovalPolicy } from 'aws-cdk-lib';
 import { Table, AttributeType } from 'aws-cdk-lib/aws-dynamodb';
 import { Runtime, Architecture } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunctionProps, NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
-import { dbPolicy, iotAdminPolicy } from '../policies';
+import { dbPolicy, iotAdminPolicy, iotPolicy } from '../policies';
 
 export class Configuration extends Construct {
     table: Table;
@@ -14,6 +14,7 @@ export class Configuration extends Construct {
     create: NodejsFunction;
     remove: NodejsFunction;
     update: NodejsFunction;
+    mqttTopicHandler: NodejsFunction;
 
     constructor(scope: Construct, id: string) {
         super(scope, id);
@@ -79,6 +80,14 @@ export class Configuration extends Construct {
             ...commonLambdaProps,
             functionName: `${stackName}-update-configuration`,
             handler: 'index.updateConfiguration',
+            entry: join(__dirname, '../../src/services/configuration/index.ts'),
+        });
+
+        this.mqttTopicHandler = new NodejsFunction(this, 'mqttConfigurationTopicHandler', {
+            ...commonLambdaProps,
+            functionName: `${stackName}-mqtt-configuration-topic-handler`,
+            initialPolicy: [iotPolicy, dbPolicy],
+            handler: 'index.mqttConfigurationTopicHandler',
             entry: join(__dirname, '../../src/services/configuration/index.ts'),
         });
     }

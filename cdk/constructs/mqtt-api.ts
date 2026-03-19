@@ -1,62 +1,24 @@
-import { join } from 'path';
 import { Construct } from 'constructs';
-import { Duration } from 'aws-cdk-lib';
 import { CfnTopicRule } from 'aws-cdk-lib/aws-iot';
-import { Runtime, Architecture } from 'aws-cdk-lib/aws-lambda';
 import { ServicePrincipal } from 'aws-cdk-lib/aws-iam';
-import { NodejsFunctionProps, NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
-import { dbPolicy, iotPolicy } from '../policies';
-
+import { IFunction } from 'aws-cdk-lib/aws-lambda';
 export class Mqtt extends Construct {
-    eventTopic: CfnTopicRule;
-    configurationTopic: CfnTopicRule;
-
-    eventTopicHandler: NodejsFunction;
-    configurationTopicHandler: NodejsFunction;
-
-    constructor(scope: Construct, id: string, props: { configurationTable: string; dataTable: string }) {
+    constructor(scope: Construct, id: string) {
         super(scope, id);
+    }
 
-        const commonLambdaProps: Partial<NodejsFunctionProps> = {
-            initialPolicy: [iotPolicy, dbPolicy],
-            runtime: Runtime.NODEJS_LATEST,
-            architecture: Architecture.ARM_64,
-            bundling: { minify: true },
-            timeout: Duration.seconds(60),
-            environment: {
-                DATA_TABLE: props.dataTable,
-                CONFIGURATION_TABLE: props.configurationTable,
-            },
-        };
+    addTopicRule(params: { topic: string; handler: IFunction; select?: string; }) {
+        const { topic, handler, select = '*' } = params;
 
-        this.configurationTopicHandler = new NodejsFunction(this, 'configurationTopicHandler', {
-            ...commonLambdaProps,
-            handler: 'index.mqttConfigurationTopicHandler',
-            entry: join(__dirname, '../../src/services/mqtt/index.ts'),
-        });
+        const ruleId = topic.replace(/\W/g, '');
 
-        this.configurationTopic = new CfnTopicRule(this, 'configurationTopicRule', {
+        new CfnTopicRule(this, ruleId, {
             topicRulePayload: {
-                sql: `SELECT topic(2) as controllerId FROM 'controllers/+/config/pub'`,
-                actions: [{ lambda: { functionArn: this.configurationTopicHandler.functionArn } }],
+                sql: `SELECT ${select} FROM '${topic}'`,
+                actions: [{ lambda: { functionArn: handler.functionArn } }],
             },
         });
 
-        this.eventTopicHandler = new NodejsFunction(this, 'eventTopicHandler', {
-            ...commonLambdaProps,
-            handler: 'index.mqttEventTopicHandler',
-            entry: join(__dirname, '../../src/services/mqtt/index.ts'),
-        });
-
-        this.eventTopic = new CfnTopicRule(this, 'eventTopicRule', {
-            topicRulePayload: {
-                sql: `SELECT *, topic(2) as controllerId FROM 'controllers/+/events/pub'`,
-                actions: [{ lambda: { functionArn: this.eventTopicHandler.functionArn } }],
-            },
-        });
-
-        this.configurationTopicHandler.grantInvoke(new ServicePrincipal('iot.amazonaws.com'));
-
-        this.eventTopicHandler.grantInvoke(new ServicePrincipal('iot.amazonaws.com'));
+        handler.grantInvoke(new ServicePrincipal('iot.amazonaws.com'));
     }
 }

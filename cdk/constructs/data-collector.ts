@@ -11,6 +11,7 @@ export class DataCollector extends Construct {
 
     push: NodejsFunction;
     query: NodejsFunction;
+    mqttTopicHandler: NodejsFunction;
 
     constructor(scope: Construct, id: string) {
         super(scope, id);
@@ -38,14 +39,13 @@ export class DataCollector extends Construct {
             runtime: Runtime.NODEJS_LATEST,
             architecture: Architecture.ARM_64,
             bundling: { minify: true },
-            environment: { CONFIGURATION_TABLE: this.table.tableName },
+            environment: { DATA_TABLE: this.table.tableName },
             initialPolicy: [dbPolicy],
         };
 
         this.push = new NodejsFunction(this, 'pushDataHandler', {
             ...commonLambdaProps,
             functionName: `${stackName}-push-data`,
-            environment: { DATA_TABLE: this.table.tableName },
             handler: 'index.pushData',
             entry: join(__dirname, '../../src/services/data-collector/index.ts'),
         });
@@ -53,8 +53,14 @@ export class DataCollector extends Construct {
         this.query = new NodejsFunction(this, 'queryDataHandler', {
             ...commonLambdaProps,
             functionName: `${stackName}-query-data`,
-            environment: { DATA_TABLE: this.table.tableName },
             handler: 'index.queryData',
+            entry: join(__dirname, '../../src/services/data-collector/index.ts'),
+        });
+
+        this.mqttTopicHandler = new NodejsFunction(this, 'mqttDataTopicHandler', {
+            ...commonLambdaProps,
+            functionName: `${stackName}-mqtt-data-topic-handler`,
+            handler: 'index.mqttDataTopicHandler',
             entry: join(__dirname, '../../src/services/data-collector/index.ts'),
         });
     }

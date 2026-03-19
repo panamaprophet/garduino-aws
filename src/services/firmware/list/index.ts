@@ -1,6 +1,6 @@
 import { APIGatewayProxyEventBase } from 'aws-lambda';
-import { handleResponse } from '@/shared/helpers';
-import { listObjects } from '@/shared/services/s3';
+import { handleResponse } from '@/lib/response';
+import { listObjects } from '@/lib/s3';
 
 export const handler = async (event: APIGatewayProxyEventBase<unknown>) => {
     const bucket = process.env.FIRMWARE_BUCKET;
