@@ -1,3 +1,3 @@
-export { handler as pushData } from './push-data';
-export { handler as queryData } from './query-data';
-export { handler as mqttDataTopicHandler } from './mqtt-data-topic-handler';
+export { handler as pushData } from './handlers/push-data';
+export { handler as queryData } from './handlers/query-data';
+export { handler as mqttDataTopicHandler } from './handlers/mqtt-data-topic-handler';

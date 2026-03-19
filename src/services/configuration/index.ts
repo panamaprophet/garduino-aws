@@ -1,6 +1,6 @@
-export { handler as getConfiguration } from './get-configuration';
-export { handler as listConfigurations } from './list-configurations';
-export { handler as createConfiguration } from './create-configuration';
-export { handler as updateConfiguration } from './update-configuration';
-export { handler as removeConfiguration } from './remove-configuration';
-export { handler as mqttConfigurationTopicHandler } from './mqtt-configuration-topic-handler';
+export { handler as getConfiguration } from './handlers/get-configuration';
+export { handler as listConfigurations } from './handlers/list-configurations';
+export { handler as createConfiguration } from './handlers/create-configuration';
+export { handler as updateConfiguration } from './handlers/update-configuration';
+export { handler as removeConfiguration } from './handlers/remove-configuration';
+export { handler as mqttConfigurationTopicHandler } from './handlers/mqtt-configuration-topic-handler';

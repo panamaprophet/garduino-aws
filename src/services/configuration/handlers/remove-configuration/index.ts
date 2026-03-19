@@ -1,14 +1,13 @@
 import { APIGatewayEvent } from 'aws-lambda';
 import { handleResponse } from '@/lib/response';
-import { setControllerConfiguration } from '../lib';
+import { removeControllerConfiguration } from '../../lib';
 
 
 export const handler = async (event: APIGatewayEvent) => {
     const { pathParameters } = event;
     const { controllerId } = pathParameters!;
-    const configuration = JSON.parse(String(event.body));
 
-    await setControllerConfiguration(controllerId!, configuration);
+    const result = await removeControllerConfiguration(controllerId!);
 
-    return handleResponse({ controllerId, ...configuration });
+    return handleResponse({ success: result });
 };

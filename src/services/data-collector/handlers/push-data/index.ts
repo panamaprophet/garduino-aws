@@ -1,18 +1,22 @@
 import { APIGatewayEvent } from 'aws-lambda';
 import { handleResponse } from '@/lib/response';
-import { getControllerEvents } from '../lib/get-controller-events';
+import { addControllerEvent } from '../../lib/add-controller-event';
 
 
 export const handler = async (event: APIGatewayEvent) => {
-    const { pathParameters, queryStringParameters } = event;
+    const { pathParameters } = event;
     const { controllerId } = pathParameters!;
-    const { startDate, endDate } = queryStringParameters || {};
+    const payload = JSON.parse(String(event.body));
 
     if (!controllerId) {
         return handleResponse({ error: 'Invalid controllerId' }, 500);
     }
 
-    const result = await getControllerEvents(controllerId, { startDate, endDate });
+    if (!payload) {
+        return handleResponse({ error: 'Invalid payload' }, 500);
+    }
+
+    const result = await addControllerEvent(controllerId, payload);
 
     return handleResponse(result);
 };
