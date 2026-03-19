@@ -4,6 +4,7 @@ import { HttpMethod } from 'aws-cdk-lib/aws-events';
 
 import { Configuration } from './constructs/configuration';
 import { DataCollector } from './constructs/data-collector';
+import { Firmware } from './constructs/firmware';
 import { Api } from './constructs/http-api';
 import { Mqtt } from './constructs/mqtt-api';
 
@@ -13,12 +14,14 @@ export class Garduino extends Stack {
 
     configuration: Configuration;
     dataCollector: DataCollector;
+    firmware: Firmware;
 
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
 
         this.configuration = new Configuration(this, 'configuration');
         this.dataCollector = new DataCollector(this, 'data-collector');
+        this.firmware = new Firmware(this, 'firmware');
 
         this.api = new Api(this, 'http-api');
 
@@ -36,5 +39,8 @@ export class Garduino extends Stack {
 
         this.api.addRoute('/v1/controllers/{controllerId}/data', this.dataCollector.push, { method: HttpMethod.PUT });
         this.api.addRoute('/v1/controllers/{controllerId}/data', this.dataCollector.query);
+
+        this.api.addRoute('/v1/firmware', this.firmware.list);
+        this.api.addRoute('/v1/firmware/download', this.firmware.getDownloadUrl);
     }
 }
