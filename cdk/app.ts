@@ -1,6 +1,4 @@
-#!/usr/bin/env ts-node
-
-import 'source-map-support/register';
+#!/usr/bin/env tsx
 
 import { App, StackProps } from 'aws-cdk-lib';
 import { Garduino } from './stack';

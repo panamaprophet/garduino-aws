@@ -19,7 +19,7 @@ export class Mqtt extends Construct {
 
         const commonLambdaProps: Partial<NodejsFunctionProps> = {
             initialPolicy: [iotPolicy, dbPolicy],
-            runtime: Runtime.NODEJS_20_X,
+            runtime: Runtime.NODEJS_LATEST,
             architecture: Architecture.ARM_64,
             bundling: { minify: true },
             timeout: Duration.seconds(60),
