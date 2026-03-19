@@ -30,7 +30,7 @@ export const getControllerEvents = async (controllerId: string, options: Partial
             ':startDate': { N: String(startDate) },
             ':endDate': { N: String(endDate) },
         },
-        ProjectionExpression: 'ts, humidity, temperature, event, isOn',
+        ProjectionExpression: 'ts, humidity, temperature, fanSpeed, event, isOn',
         ScanIndexForward: false,
         Limit: limit,
     }));
