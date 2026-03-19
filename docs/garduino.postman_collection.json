@@ -1,0 +1,293 @@
+{
+	"info": {
+		"_postman_id": "garduino-aws-api",
+		"name": "Garduino AWS",
+		"description": "Garduino IoT controller management API.\n\n## Setup\n\n1. Import the environment file and fill in the variable values\n2. Go to the collection's **Authorization** tab and click **Get New Access Token** to authenticate via Cognito",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "oauth2",
+		"oauth2": [
+			{
+				"key": "grant_type",
+				"value": "authorization_code",
+				"type": "string"
+			},
+			{
+				"key": "authUrl",
+				"value": "https://{{cognitoDomain}}.auth.{{region}}.amazoncognito.com/oauth2/authorize",
+				"type": "string"
+			},
+			{
+				"key": "accessTokenUrl",
+				"value": "https://{{cognitoDomain}}.auth.{{region}}.amazoncognito.com/oauth2/token",
+				"type": "string"
+			},
+			{
+				"key": "clientId",
+				"value": "{{cognitoClientId}}",
+				"type": "string"
+			},
+			{
+				"key": "scope",
+				"value": "openid",
+				"type": "string"
+			},
+			{
+				"key": "redirect_uri",
+				"value": "https://oauth.pstmn.io/v1/callback",
+				"type": "string"
+			},
+			{
+				"key": "tokenName",
+				"value": "Garduino Cognito Token",
+				"type": "string"
+			},
+			{
+				"key": "addTokenTo",
+				"value": "header",
+				"type": "string"
+			},
+			{
+				"key": "useBrowser",
+				"value": true,
+				"type": "boolean"
+			},
+			{
+				"key": "challengeAlgorithm",
+				"value": "S256",
+				"type": "string"
+			},
+			{
+				"key": "client_authentication",
+				"value": "body",
+				"type": "string"
+			}
+		]
+	},
+	"event": [],
+	"variable": [],
+	"item": [
+		{
+			"name": "Controllers",
+			"item": [
+				{
+					"name": "List Controllers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/controllers",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "controllers"]
+						},
+						"description": "Returns an array of controller IDs owned by the authenticated user."
+					},
+					"response": []
+				},
+				{
+					"name": "Create Controller",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/controllers",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "controllers"]
+						},
+						"description": "Provisions a new IoT controller: creates an IoT Thing, MQTT policy, certificates, and a default configuration.\n\nThe response includes TLS certificates needed for MQTT connectivity."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Configuration",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/controllers/:controllerId",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "controllers", ":controllerId"],
+							"query": [
+								{
+									"key": "raw",
+									"value": "true",
+									"description": "Return raw DynamoDB configuration instead of time-relative mapped version",
+									"disabled": true
+								}
+							],
+							"variable": [
+								{
+									"key": "controllerId",
+									"value": ""
+								}
+							]
+						},
+						"description": "Returns the configuration for a specific controller.\n\nBy default returns the time-relative mapped configuration. Add `?raw=true` to get the raw stored values."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Configuration",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"onTime\": \"12:00\",\n    \"duration\": 43200000,\n    \"thresholdTemperature\": 30,\n    \"fanSpeed\": 125\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/controllers/:controllerId",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "controllers", ":controllerId"],
+							"variable": [
+								{
+									"key": "controllerId",
+									"value": ""
+								}
+							]
+						},
+						"description": "Replaces the configuration for a controller.\n\n**Body fields:**\n- `onTime` — time of day as `HH:MM` (e.g. `\"12:00\"`)\n- `duration` — duration in milliseconds\n- `thresholdTemperature` — temperature threshold\n- `fanSpeed` — fan speed value (0-255)"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Controller",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/controllers/:controllerId",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "controllers", ":controllerId"],
+							"variable": [
+								{
+									"key": "controllerId",
+									"value": ""
+								}
+							]
+						},
+						"description": "Removes the configuration record for a controller."
+					},
+					"response": []
+				}
+			],
+			"description": "Manage IoT controller provisioning and configuration."
+		},
+		{
+			"name": "Data",
+			"item": [
+				{
+					"name": "Push Data",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"temperature\": 25.5,\n    \"humidity\": 60,\n    \"fanSpeed\": 125,\n    \"isOn\": true,\n    \"event\": \"update\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/v1/controllers/:controllerId/data",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "controllers", ":controllerId", "data"],
+							"variable": [
+								{
+									"key": "controllerId",
+									"value": ""
+								}
+							]
+						},
+						"description": "Push a data event for a controller. The payload is stored with auto-generated `id` and `ts` fields."
+					},
+					"response": []
+				},
+				{
+					"name": "Query Data",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/controllers/:controllerId/data",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "controllers", ":controllerId", "data"],
+							"variable": [
+								{
+									"key": "controllerId",
+									"value": ""
+								}
+							],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "",
+									"description": "Start timestamp (defaults to 24 hours ago)",
+									"disabled": true
+								},
+								{
+									"key": "endDate",
+									"value": "",
+									"description": "End timestamp (defaults to now)",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Query data events for a controller within a time range.\n\nDefaults to the last 24 hours if no dates are provided."
+					},
+					"response": []
+				}
+			],
+			"description": "Push and query sensor data events for controllers."
+		},
+		{
+			"name": "Firmware",
+			"item": [
+				{
+					"name": "List Firmware",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/firmware",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "firmware"]
+						},
+						"description": "Lists all available firmware files sorted by last modified (newest first).\n\nReturns `key`, `lastModified` (epoch ms), `size`, and `md5` for each file."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Firmware Download URL",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/v1/firmware/download?key=firmware.bin",
+							"host": ["{{baseUrl}}"],
+							"path": ["v1", "firmware", "download"],
+							"query": [
+								{
+									"key": "key",
+									"value": "firmware.bin",
+									"description": "S3 object key of the firmware file"
+								}
+							]
+						},
+						"description": "Returns a pre-signed S3 download URL and MD5 hash for a specific firmware file."
+					},
+					"response": []
+				}
+			],
+			"description": "Browse and download firmware binaries."
+		}
+	]
+}
