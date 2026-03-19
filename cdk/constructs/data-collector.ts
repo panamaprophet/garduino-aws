@@ -35,7 +35,7 @@ export class DataCollector extends Construct {
         });
 
         const commonLambdaProps: Partial<NodejsFunctionProps> = {
-            runtime: Runtime.NODEJS_20_X,
+            runtime: Runtime.NODEJS_LATEST,
             architecture: Architecture.ARM_64,
             bundling: { minify: true },
             environment: { CONFIGURATION_TABLE: this.table.tableName },
