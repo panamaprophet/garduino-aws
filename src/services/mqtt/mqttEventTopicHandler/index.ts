@@ -1,5 +1,5 @@
 import { decorateWithPayloadValidation, handleResponse } from '@/shared/helpers';
-import { addControllerEvent } from '@/shared/services/data-сollector';
+import { addControllerEvent } from '@/shared/services/data-collector';
 
 const _handler = async (event: { controllerId: string, [k: string]: unknown }) => {
     const { controllerId, ...payload } = event;
