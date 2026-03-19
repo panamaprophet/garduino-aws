@@ -24,11 +24,7 @@ export class Garduino extends Stack {
         this.firmware = new Firmware(this, 'firmware');
 
         this.api = new Api(this, 'http-api');
-
-        this.mqtt = new Mqtt(this, 'mqtt-api', {
-            configurationTable: this.configuration.table.tableName,
-            dataTable: this.dataCollector.table.tableName,
-        });
+        this.mqtt = new Mqtt(this, 'mqtt-api');
 
         this.api.addRoute('/v1/controllers', this.configuration.list);
         this.api.addRoute('/v1/controllers', this.configuration.create, { method: HttpMethod.POST });
@@ -42,5 +38,17 @@ export class Garduino extends Stack {
 
         this.api.addRoute('/v1/firmware', this.firmware.list);
         this.api.addRoute('/v1/firmware/download', this.firmware.getDownloadUrl);
+
+        this.mqtt.addTopicRule({
+            topic: 'controllers/+/config/pub',
+            handler: this.configuration.mqttTopicHandler,
+            select: 'topic(2) as controllerId',
+        });
+
+        this.mqtt.addTopicRule({
+            topic: 'controllers/+/events/pub',
+            handler: this.dataCollector.mqttTopicHandler,
+            select: '*, topic(2) as controllerId',
+        });
     }
 }
