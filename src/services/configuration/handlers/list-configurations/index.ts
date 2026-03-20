@@ -1,7 +1,5 @@
 import { APIGatewayEventRequestContextJWTAuthorizer, APIGatewayProxyEventBase } from 'aws-lambda';
-import { handleResponse } from '@/lib/response';
 import { getControllerIdsByOwnerId } from '../../lib';
-
 
 export const handler = async (event: APIGatewayProxyEventBase<APIGatewayEventRequestContextJWTAuthorizer>) => {
     const { requestContext } = event;
@@ -11,10 +9,11 @@ export const handler = async (event: APIGatewayProxyEventBase<APIGatewayEventReq
     const userId = jwt.claims.sub;
 
     if (!userId) {
-        return handleResponse({ message: 'no user found' }, 401);
+        return {
+            statusCode: 401,
+            body: JSON.stringify({ message: 'no user found' }),
+        };
     }
 
-    const controllerIds = await getControllerIdsByOwnerId(String(userId));
-
-    return handleResponse(controllerIds);
+    return getControllerIdsByOwnerId(String(userId));
 };
