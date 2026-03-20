@@ -1,7 +1,5 @@
 import { randomUUID, UUID } from 'crypto';
-import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { client } from '@/lib/db';
+import { get, put, remove, query } from '@/lib/db';
 import { getTimeRelativeConfiguration } from '@/lib/time';
 
 interface Configuration {
@@ -11,8 +9,6 @@ interface Configuration {
     thresholdTemperature: number;
     fanSpeed: number;
 }
-
-const CONFIGURATION_TABLE = process.env.CONFIGURATION_TABLE;
 
 const mapConfiguration = (configuration: Configuration) => {
     const timerConfiguration = getTimeRelativeConfiguration(configuration.onTime, configuration.duration);
@@ -29,12 +25,7 @@ const mapConfiguration = (configuration: Configuration) => {
 };
 
 export const getControllerConfigurationRaw = async (controllerId: string) => {
-    const { Item } = await client.send(new GetItemCommand({
-        TableName: CONFIGURATION_TABLE,
-        Key: marshall({ controllerId }),
-    }));
-
-    return Item ? unmarshall(Item) as Configuration : null;
+    return get<Configuration>(process.env.CONFIGURATION_TABLE, { controllerId });
 };
 
 export const getControllerConfiguration = async (controllerId: string) => {
@@ -44,40 +35,32 @@ export const getControllerConfiguration = async (controllerId: string) => {
 };
 
 export const setControllerConfiguration = async (controllerId: string, configuration: Configuration) => {
-    const result = await client.send(new PutItemCommand({
-        TableName: CONFIGURATION_TABLE,
-        Item: marshall({ controllerId, ...configuration }),
-    }));
-
-    return result.$metadata.httpStatusCode === 200;
+    return put(process.env.CONFIGURATION_TABLE, { controllerId, ...configuration });
 };
 
 export const removeControllerConfiguration = async (controllerId: string) => {
-    const result = await client.send(new DeleteItemCommand({
-        TableName: CONFIGURATION_TABLE,
-        Key: marshall({ controllerId }),
-    }))
-
-    return result.$metadata.httpStatusCode === 200;
+    return remove(process.env.CONFIGURATION_TABLE, { controllerId });
 };
 
 export const getControllerIdsByOwnerId = async (ownerId: string) => {
-    const result = await client.send(new QueryCommand({
-        TableName: CONFIGURATION_TABLE,
-        IndexName: 'ownerId_Index',
-        KeyConditionExpression: '#key = :value',
-        ExpressionAttributeNames: { '#key': 'ownerId' },
-        ExpressionAttributeValues: { ':value': { S: ownerId } },
-        ProjectionExpression: 'controllerId',
-    }));
+    const result = await query<{ controllerId: string }>(
+        process.env.CONFIGURATION_TABLE,
+        '#ownerId = :ownerId',
+        {
+            attributes: {
+                '#ownerId': 'ownerId',
+                ':ownerId': ownerId,
+            },
+            projection: ['controllerId'],
+            index: 'ownerId_Index',
+        }
+    );
 
-    if (!result.Items) {
+    if (!result) {
         return null;
     }
 
-    return result.Items
-        .map(item => unmarshall(item))
-        .map(item => item.controllerId);
+    return result.map(item => item.controllerId);
 };
 
 export const createConfiguration = async (controllerId: UUID, props: Partial<Configuration>) => {
