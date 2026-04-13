@@ -18,8 +18,8 @@ interface ControllerEvent {
 }
 
 export const getControllerEvents = async (controllerId: string, options: Partial<Options>) => {
-    const startDate = options.startDate || (Date.now() - DAY_IN_MILLISECONDS);
-    const endDate = options.endDate || Date.now();
+    const startDate = Number(options.startDate) || (Date.now() - DAY_IN_MILLISECONDS);
+    const endDate = Number(options.endDate) || Date.now();
 
     return query<ControllerEvent>(
         process.env.DATA_TABLE,
