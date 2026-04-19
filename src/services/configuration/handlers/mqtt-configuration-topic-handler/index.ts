@@ -1,8 +1,13 @@
+import { Handler } from 'aws-lambda';
 import { decorateWithPayloadValidation } from '@/lib/request';
 import { publish } from '@/lib/mqtt';
 import { getControllerConfiguration } from '../../lib';
 
-const _handler = async (event: { controllerId: string }) => {
+interface EventPayload {
+    controllerId: string;
+}
+
+const _handler: Handler<EventPayload> = async (event) => {
     const { controllerId } = event;
 
     const result = await getControllerConfiguration(controllerId);

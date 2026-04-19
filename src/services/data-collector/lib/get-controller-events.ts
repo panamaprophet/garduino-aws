@@ -10,11 +10,18 @@ interface Options {
 
 interface ControllerEvent {
     ts: number;
-    humidity: number;
-    temperature: number;
-    fanSpeed: number;
+    fan: {
+        currentSpeed: number;
+    };
+    light: {
+        isOn: boolean;
+    };
+    sensor: {
+        temperature: number;
+        humidity: number;
+        stabilityFactor: number;
+    };
     event: string;
-    isOn: boolean;
 }
 
 export const getControllerEvents = async (controllerId: string, options: Partial<Options>) => {
@@ -32,7 +39,6 @@ export const getControllerEvents = async (controllerId: string, options: Partial
                 ':startDate': startDate,
                 ':endDate': endDate,
             },
-            projection: ['ts', 'humidity', 'temperature', 'fanSpeed', 'event', 'isOn'],
             index: 'controllerId_Index',
             limit: options.limit,
             scanForward: false,
