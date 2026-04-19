@@ -16,6 +16,7 @@ export class Mqtt extends Construct {
             topicRulePayload: {
                 sql: `SELECT ${select} FROM '${topic}'`,
                 actions: [{ lambda: { functionArn: handler.functionArn } }],
+                awsIotSqlVersion: '2016-03-23',
             },
         });
 

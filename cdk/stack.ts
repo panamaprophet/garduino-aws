@@ -48,7 +48,7 @@ export class Garduino extends Stack {
         this.mqtt.addTopicRule({
             topic: 'controllers/+/events/pub',
             handler: this.dataCollector.mqttTopicHandler,
-            select: '*, topic(2) as controllerId',
+            select: 'topic(2) as controllerId, * as payload',
         });
     }
 }
