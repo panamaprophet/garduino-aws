@@ -14,13 +14,16 @@ export class Api extends Construct {
 
         const { stackName, region } = Stack.of(this);
 
-        const context = this.node.getContext('props');
+        const userPoolId = process.env.USER_POOL_ID;
+        const userPoolClientId = process.env.USER_POOL_CLIENT_ID;
 
-        const userPoolId = context['userPoolId'];
-        const userPoolClientIds = context['userPoolClientIds'];
+        if (!userPoolId || !userPoolClientId) {
+            throw new Error('Missing user pool configuration in environment variables');
+        }
+
         const issuerUrl = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`;
 
-        const authorizer = new HttpJwtAuthorizer('authorizer', issuerUrl, { jwtAudience: [...userPoolClientIds] });
+        const authorizer = new HttpJwtAuthorizer('authorizer', issuerUrl, { jwtAudience: [userPoolClientId] });
 
         this.api = new HttpApi(this, `httpApi`, {
             apiName: `${stackName}-api`,

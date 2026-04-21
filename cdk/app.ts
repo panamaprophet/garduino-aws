@@ -3,8 +3,10 @@
 import { App, StackProps } from 'aws-cdk-lib';
 import { Garduino } from './stack';
 
-if (!process.env.GIT_COMMIT_HASH) {
-    throw Error('Invalid Git Commit Hash');
+const apiVersion = process.env.API_VERSION;
+
+if (!apiVersion) {
+  throw new Error('API_VERSION environment variable is not set');
 }
 
 const props: StackProps = {
@@ -12,7 +14,7 @@ const props: StackProps = {
         account: process.env.CDK_DEFAULT_ACCOUNT,
         region: process.env.CDK_DEFAULT_REGION,
     },
-    stackName: `garduino-${process.env.GIT_COMMIT_HASH}`,
+    stackName: `garduino-${apiVersion}`,
 };
 
 const app = new App();
