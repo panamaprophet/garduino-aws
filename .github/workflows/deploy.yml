@@ -15,13 +15,15 @@ jobs:
       - uses: pnpm/action-setup@v6
         with:
           cache: true
+          cache_dependency_path: pnpm-lock.yaml
 
       - uses: actions/setup-node@v6
         with:
           node-version: latest
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install
+
       - run: pnpm exec tsc --noEmit
 
   deploy:
@@ -35,6 +37,7 @@ jobs:
       - uses: pnpm/action-setup@v6
         with:
           cache: true
+          cache_dependency_path: pnpm-lock.yaml
 
       - uses: actions/setup-node@v6
         with:
@@ -42,7 +45,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6.1.0
