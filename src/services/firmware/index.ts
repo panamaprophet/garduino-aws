@@ -1,2 +1,1 @@
-export { handler as list } from './handlers/list';
-export { handler as getFirmwareDownloadUrl } from './handlers/get-firmware-download-url';
+export { handler as listFirmware } from './http/list-firmware';

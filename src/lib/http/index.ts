@@ -17,25 +17,22 @@ const json = (statusCode: number, body: unknown): HttpResult => ({
     body: JSON.stringify(body),
 });
 
-const toErrorResult = (error: unknown): [
-    statusCode: number,
-    details: Pick<AppError, 'code' | 'message' | 'details'>
-] => {
+const toErrorResult = (error: unknown) => {
     const appError = error instanceof AppError ? error : internalError();
 
     if (!(error instanceof AppError) || appError.statusCode >= 500) {
         console.error('request failed:', error);
     }
 
-  const { code, statusCode, message, details } = appError;
+    const { code, statusCode, message, details } = appError;
 
-  const result = {
-      code,
-      message,
-      ...(details ? { details } : {}),
-  };
-
-  return [statusCode, result];
+    return json(statusCode, {
+        error: {
+            code,
+            message,
+            ...(details ? { details } : {}),
+        },
+    });
 };
 
 export const getUserId = (event: HttpEvent) => {
@@ -77,12 +74,13 @@ export const getJsonBody = (event: HttpEvent): unknown => {
 export const defineHandler = <T>(handler: HandlerFn<T>) => async (event: HttpEvent): Promise<HttpResult> => {
     try {
         const userId = getUserId(event);
-        const result = await handler(event, { userId });
+        const data = await handler(event, { userId });
 
-        return json(200, result);
+        return json(200, {
+            data,
+            meta: { requestId: event.requestContext.requestId },
+        });
     } catch (error) {
-        const [statusCode, details] = toErrorResult(error);
-
-        return json(statusCode, details);
+        return toErrorResult(error);
     }
 };

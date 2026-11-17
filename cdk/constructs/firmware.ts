@@ -1,27 +1,21 @@
-import { join } from 'path';
 import { Construct } from 'constructs';
 import { Stack, RemovalPolicy } from 'aws-cdk-lib';
 import { PolicyStatement, StarPrincipal } from 'aws-cdk-lib/aws-iam';
 import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3';
-import { Runtime, Architecture } from 'aws-cdk-lib/aws-lambda';
-import { NodejsFunctionProps, NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
-import { createLogGroup } from '../lib/log-group';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import { createFunction } from '../lib/function';
 
 export class Firmware extends Construct {
-    readonly bucket: Bucket;
-
-    list: NodejsFunction;
-    getDownloadUrl: NodejsFunction;
+    readonly list: NodejsFunction;
 
     constructor(scope: Construct, id: string) {
         super(scope, id);
 
         const { stackName } = Stack.of(this);
 
-        this.bucket = new Bucket(this, 'bucket', {
+        const bucket = new Bucket(this, 'bucket', {
             bucketName: `${stackName}-firmware`,
-            removalPolicy: RemovalPolicy.DESTROY,
-            autoDeleteObjects: true,
+            removalPolicy: RemovalPolicy.RETAIN,
             blockPublicAccess: new BlockPublicAccess({
                 blockPublicAcls: true,
                 blockPublicPolicy: false,
@@ -30,40 +24,21 @@ export class Firmware extends Construct {
             }),
         });
 
-        this.bucket.addToResourcePolicy(
+        bucket.addToResourcePolicy(
             new PolicyStatement({
                 sid: 'PublicReadGetObject',
                 actions: ['s3:GetObject'],
-                resources: [this.bucket.arnForObjects('*')],
+                resources: [bucket.arnForObjects('*')],
                 principals: [new StarPrincipal()],
             }),
         );
 
-        const commonLambdaProps: Partial<NodejsFunctionProps> = {
-            runtime: Runtime.NODEJS_LATEST,
-            architecture: Architecture.ARM_64,
-            bundling: { minify: true },
-            environment: { FIRMWARE_BUCKET: this.bucket.bucketName },
-        };
-
-        this.list = new NodejsFunction(this, 'listFirmware', {
-            ...commonLambdaProps,
-            functionName: `${stackName}-list-firmware`,
-            handler: 'index.list',
-            entry: join(__dirname, '../../src/services/firmware/index.ts'),
-            logGroup: createLogGroup(this, 'listFirmware'),
+        this.list = createFunction(this, {
+            service: 'firmware',
+            handler: 'listFirmware',
+            environment: { FIRMWARE_BUCKET: bucket.bucketName },
         });
 
-        this.bucket.grantRead(this.list);
-
-        this.getDownloadUrl = new NodejsFunction(this, 'getFirmwareDownloadUrl', {
-            ...commonLambdaProps,
-            functionName: `${stackName}-get-firmware-download-url`,
-            handler: 'index.getFirmwareDownloadUrl',
-            entry: join(__dirname, '../../src/services/firmware/index.ts'),
-            logGroup: createLogGroup(this, 'getFirmwareDownloadUrl'),
-        });
-
-        this.bucket.grantRead(this.getDownloadUrl);
+        bucket.grantRead(this.list);
     }
 }

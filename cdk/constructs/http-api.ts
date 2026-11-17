@@ -46,7 +46,7 @@ export class Api extends Construct {
 
     addRoute(path: string, handler: IFunction, options: { method: HttpMethod } = { method: HttpMethod.GET }) {
         const { stackName } = Stack.of(this);
-        const name = path.replace(/\W/g, '');
+        const name = `${options.method}${path}`.replace(/\W/g, '');
 
         this.api.addRoutes({
             path,
