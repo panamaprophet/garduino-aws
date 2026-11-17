@@ -1,14 +1,12 @@
-import { APIGatewayProxyEventBase } from 'aws-lambda';
+import { defineHandler } from '@/lib/http';
+import { internalError } from '@/lib/errors';
 import { listObjects } from '@/lib/s3';
 
-export const handler = async (event: APIGatewayProxyEventBase<unknown>) => {
+export const handler = defineHandler(async () => {
     const bucket = process.env.FIRMWARE_BUCKET;
 
     if (!bucket) {
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: 'Firmware bucket not configured' }),
-        };
+        throw internalError('Firmware bucket not configured');
     }
 
     const objects = await listObjects(bucket);
@@ -23,4 +21,4 @@ export const handler = async (event: APIGatewayProxyEventBase<unknown>) => {
         size: item.size,
         md5: item.md5,
     }));
-};
+});

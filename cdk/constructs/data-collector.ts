@@ -1,10 +1,15 @@
 import { join } from 'path';
 import { Construct } from 'constructs';
 import { RemovalPolicy, Stack } from 'aws-cdk-lib';
-import { Table, AttributeType } from 'aws-cdk-lib/aws-dynamodb';
+import { Table, AttributeType, ITable } from 'aws-cdk-lib/aws-dynamodb';
 import { Runtime, Architecture } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunctionProps, NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
-import { dbPolicy } from '../policies';
+import { dbPolicy } from '../lib/policies';
+import { createLogGroup } from '../lib/log-group';
+
+interface DataCollectorProps {
+    configurationTable: ITable;
+}
 
 export class DataCollector extends Construct {
     table: Table;
@@ -13,7 +18,7 @@ export class DataCollector extends Construct {
     query: NodejsFunction;
     mqttTopicHandler: NodejsFunction;
 
-    constructor(scope: Construct, id: string) {
+    constructor(scope: Construct, id: string, props: DataCollectorProps) {
         super(scope, id);
 
         const { stackName } = Stack.of(this);
@@ -39,7 +44,10 @@ export class DataCollector extends Construct {
             runtime: Runtime.NODEJS_LATEST,
             architecture: Architecture.ARM_64,
             bundling: { minify: true },
-            environment: { DATA_TABLE: this.table.tableName },
+            environment: {
+                DATA_TABLE: this.table.tableName,
+                CONFIGURATION_TABLE: props.configurationTable.tableName,
+            },
             initialPolicy: [dbPolicy],
         };
 
@@ -48,6 +56,7 @@ export class DataCollector extends Construct {
             functionName: `${stackName}-push-data`,
             handler: 'index.pushData',
             entry: join(__dirname, '../../src/services/data-collector/index.ts'),
+            logGroup: createLogGroup(this, 'pushData'),
         });
 
         this.query = new NodejsFunction(this, 'queryDataHandler', {
@@ -55,6 +64,7 @@ export class DataCollector extends Construct {
             functionName: `${stackName}-query-data`,
             handler: 'index.queryData',
             entry: join(__dirname, '../../src/services/data-collector/index.ts'),
+            logGroup: createLogGroup(this, 'queryData'),
         });
 
         this.mqttTopicHandler = new NodejsFunction(this, 'mqttDataTopicHandler', {
@@ -62,6 +72,7 @@ export class DataCollector extends Construct {
             functionName: `${stackName}-mqtt-data-topic-handler`,
             handler: 'index.mqttDataTopicHandler',
             entry: join(__dirname, '../../src/services/data-collector/index.ts'),
+            logGroup: createLogGroup(this, 'mqttDataTopicHandler'),
         });
     }
 }

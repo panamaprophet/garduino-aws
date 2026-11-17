@@ -1,18 +1,12 @@
-import { APIGatewayEvent } from 'aws-lambda';
-import { removeControllerConfiguration } from '../../lib';
+import { defineHandler, getPathParameter } from '@/lib/http';
+import { removeControllerConfiguration, requireController } from '../../lib';
 
-export const handler = async (event: APIGatewayEvent) => {
-    const { pathParameters } = event;
-    const { controllerId } = pathParameters!;
+export const handler = defineHandler(async (event, { userId }) => {
+    const controllerId = getPathParameter(event, 'controllerId');
 
-    if (!controllerId) {
-        return {
-            statusCode: 400,
-            body: JSON.stringify({ error: 'Controller ID is required' }),
-        };
-    }
+    await requireController(controllerId, userId);
 
     const result = await removeControllerConfiguration(controllerId);
 
     return { success: result };
-};
+});

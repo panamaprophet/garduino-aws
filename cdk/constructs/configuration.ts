@@ -4,7 +4,8 @@ import { Stack, RemovalPolicy } from 'aws-cdk-lib';
 import { Table, AttributeType } from 'aws-cdk-lib/aws-dynamodb';
 import { Runtime, Architecture } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunctionProps, NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
-import { dbPolicy, iotAdminPolicy, iotPolicy } from '../policies';
+import { dbPolicy, iotAdminPolicy, iotPolicy } from '../lib/policies';
+import { createLogGroup } from '../lib/log-group';
 
 export class Configuration extends Construct {
     table: Table;
@@ -50,6 +51,7 @@ export class Configuration extends Construct {
             functionName: `${stackName}-get-configuration`,
             handler: 'index.getConfiguration',
             entry: join(__dirname, '../../src/services/configuration/index.ts'),
+            logGroup: createLogGroup(this, 'getConfiguration'),
         });
 
         this.list = new NodejsFunction(this, 'listConfigurations', {
@@ -57,6 +59,7 @@ export class Configuration extends Construct {
             functionName: `${stackName}-list-configurations`,
             handler: 'index.listConfigurations',
             entry: join(__dirname, '../../src/services/configuration/index.ts'),
+            logGroup: createLogGroup(this, 'listConfigurations'),
         });
 
         this.create = new NodejsFunction(this, 'createConfiguration', {
@@ -66,6 +69,7 @@ export class Configuration extends Construct {
             initialPolicy: [iotAdminPolicy, dbPolicy],
             handler: 'index.createConfiguration',
             entry: join(__dirname, '../../src/services/configuration/index.ts'),
+            logGroup: createLogGroup(this, 'createConfiguration'),
         });
 
         this.remove = new NodejsFunction(this, 'removeRonfiguration', {
@@ -74,6 +78,7 @@ export class Configuration extends Construct {
             initialPolicy: [iotAdminPolicy, dbPolicy],
             handler: 'index.removeConfiguration',
             entry: join(__dirname, '../../src/services/configuration/index.ts'),
+            logGroup: createLogGroup(this, 'removeConfiguration'),
         });
 
         this.update = new NodejsFunction(this, 'updateConfiguration', {
@@ -81,6 +86,7 @@ export class Configuration extends Construct {
             functionName: `${stackName}-update-configuration`,
             handler: 'index.updateConfiguration',
             entry: join(__dirname, '../../src/services/configuration/index.ts'),
+            logGroup: createLogGroup(this, 'updateConfiguration'),
         });
 
         this.mqttTopicHandler = new NodejsFunction(this, 'mqttConfigurationTopicHandler', {
@@ -89,6 +95,7 @@ export class Configuration extends Construct {
             initialPolicy: [iotPolicy, dbPolicy],
             handler: 'index.mqttConfigurationTopicHandler',
             entry: join(__dirname, '../../src/services/configuration/index.ts'),
+            logGroup: createLogGroup(this, 'mqttConfigurationTopicHandler'),
         });
     }
 }

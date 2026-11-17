@@ -1,19 +1,13 @@
-import { APIGatewayEvent } from 'aws-lambda';
-import { setControllerConfiguration } from '../../lib';
+import { defineHandler, getJsonBody, getPathParameter } from '@/lib/http';
+import { parse } from '@/lib/validation';
+import { requireController, updateControllerConfiguration } from '../../lib';
+import { configurationSchema } from './configuration.schema';
 
-export const handler = async (event: APIGatewayEvent) => {
-    const { pathParameters } = event;
-    const { controllerId } = pathParameters!;
-    const configuration = JSON.parse(String(event.body));
+export const handler = defineHandler(async (event, { userId }) => {
+    const controllerId = getPathParameter(event, 'controllerId');
+    const input = parse(configurationSchema, getJsonBody(event), 'Invalid configuration');
 
-    if (!controllerId) {
-        return {
-            statusCode: 400,
-            body: JSON.stringify({ error: 'Controller ID is required' }),
-        };
-    }
+    const current = await requireController(controllerId, userId);
 
-    await setControllerConfiguration(controllerId, configuration);
-
-    return { controllerId, ...configuration };
-};
+    return updateControllerConfiguration(current, input);
+});

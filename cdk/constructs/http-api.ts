@@ -4,7 +4,7 @@ import { Cors } from 'aws-cdk-lib/aws-apigateway';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { HttpJwtAuthorizer } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
-import { HttpApi, CorsHttpMethod, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
+import { HttpApi, CorsHttpMethod, HttpMethod, CfnStage } from 'aws-cdk-lib/aws-apigatewayv2';
 
 export class Api extends Construct {
     api: HttpApi;
@@ -34,6 +34,13 @@ export class Api extends Construct {
                 maxAge: Duration.seconds(500),
             },
             defaultAuthorizer: authorizer,
+        });
+
+        const defaultStage = this.api.defaultStage?.node.defaultChild as CfnStage | undefined;
+
+        defaultStage?.addPropertyOverride('DefaultRouteSettings', {
+            ThrottlingRateLimit: 5,
+            ThrottlingBurstLimit: 10,
         });
     }
 

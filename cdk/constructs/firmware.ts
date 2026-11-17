@@ -5,6 +5,7 @@ import { PolicyStatement, StarPrincipal } from 'aws-cdk-lib/aws-iam';
 import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3';
 import { Runtime, Architecture } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunctionProps, NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import { createLogGroup } from '../lib/log-group';
 
 export class Firmware extends Construct {
     readonly bucket: Bucket;
@@ -50,6 +51,7 @@ export class Firmware extends Construct {
             functionName: `${stackName}-list-firmware`,
             handler: 'index.list',
             entry: join(__dirname, '../../src/services/firmware/index.ts'),
+            logGroup: createLogGroup(this, 'listFirmware'),
         });
 
         this.bucket.grantRead(this.list);
@@ -59,6 +61,7 @@ export class Firmware extends Construct {
             functionName: `${stackName}-get-firmware-download-url`,
             handler: 'index.getFirmwareDownloadUrl',
             entry: join(__dirname, '../../src/services/firmware/index.ts'),
+            logGroup: createLogGroup(this, 'getFirmwareDownloadUrl'),
         });
 
         this.bucket.grantRead(this.getDownloadUrl);

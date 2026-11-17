@@ -1,5 +1,6 @@
 import { randomUUID, UUID } from 'crypto';
 import { get, put, remove, query } from '@/lib/db';
+import { notFoundError } from '@/lib/errors';
 import { getTimeRelativeConfiguration } from '@/lib/time';
 
 interface Configuration {
@@ -10,7 +11,11 @@ interface Configuration {
     fanSpeed: number;
 }
 
-const mapConfiguration = (configuration: Configuration) => {
+export type StoredConfiguration = Configuration & { controllerId: string };
+
+export type ConfigurationInput = Partial<Omit<Configuration, 'ownerId'>>;
+
+export const mapConfiguration = (configuration: Configuration) => {
     const timerConfiguration = getTimeRelativeConfiguration(configuration.onTime, configuration.duration);
 
     if (!timerConfiguration) {
@@ -25,7 +30,7 @@ const mapConfiguration = (configuration: Configuration) => {
 };
 
 export const getControllerConfigurationRaw = async (controllerId: string) => {
-    return get<Configuration>(process.env.CONFIGURATION_TABLE, { controllerId });
+    return get<StoredConfiguration>(process.env.CONFIGURATION_TABLE, { controllerId });
 };
 
 export const getControllerConfiguration = async (controllerId: string) => {
@@ -34,8 +39,31 @@ export const getControllerConfiguration = async (controllerId: string) => {
     return result ? mapConfiguration(result) : null;
 };
 
+export const requireController = async (controllerId: string, userId: string) => {
+    const configuration = await getControllerConfigurationRaw(controllerId);
+
+    if (!configuration || configuration.ownerId !== userId) {
+        throw notFoundError(`Controller "${controllerId}" not found`);
+    }
+
+    return configuration;
+};
+
 export const setControllerConfiguration = async (controllerId: string, configuration: Configuration) => {
     return put(process.env.CONFIGURATION_TABLE, { controllerId, ...configuration });
+};
+
+export const updateControllerConfiguration = async (current: StoredConfiguration, input: ConfigurationInput) => {
+    const next: StoredConfiguration = {
+        ...current,
+        ...input,
+        controllerId: current.controllerId,
+        ownerId: current.ownerId,
+    };
+
+    await put(process.env.CONFIGURATION_TABLE, { ...next });
+
+    return next;
 };
 
 export const removeControllerConfiguration = async (controllerId: string) => {

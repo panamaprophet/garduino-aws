@@ -1,24 +1,14 @@
-import { APIGatewayEvent } from 'aws-lambda';
+import { defineHandler, getJsonBody, getPathParameter } from '@/lib/http';
+import { parse } from '@/lib/validation';
+import { requireController } from '@/services/configuration/lib';
 import { addControllerEvent } from '../../lib/add-controller-event';
+import { eventSchema } from './event.schema';
 
-export const handler = async (event: APIGatewayEvent) => {
-    const { pathParameters } = event;
-    const { controllerId } = pathParameters!;
-    const payload = JSON.parse(String(event.body));
+export const handler = defineHandler(async (event, { userId }) => {
+    const controllerId = getPathParameter(event, 'controllerId');
+    const payload = parse(eventSchema, getJsonBody(event), 'Event payload must be a JSON object');
 
-    if (!controllerId) {
-        return {
-            statusCode: 400,
-            body: JSON.stringify({ error: 'Invalid controllerId' }),
-        };
-    }
-
-    if (!payload) {
-        return {
-            statusCode: 400,
-            body: JSON.stringify({ error: 'Invalid payload' }),
-        };
-    }
+    await requireController(controllerId, userId);
 
     return addControllerEvent(controllerId, payload);
-};
+});

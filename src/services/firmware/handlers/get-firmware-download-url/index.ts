@@ -1,29 +1,28 @@
-import { APIGatewayProxyEventBase } from 'aws-lambda';
+import { defineHandler } from '@/lib/http';
+import { internalError, notFoundError, validationError } from '@/lib/errors';
 import { getSignedUrl, getObjectHead } from '@/lib/s3';
 
-export const handler = async (event: APIGatewayProxyEventBase<unknown>) => {
+const isNotFoundError = (error: unknown) => error instanceof Error && error.name === 'NotFound';
+
+export const handler = defineHandler(async (event) => {
     const key = event.queryStringParameters?.key;
 
     if (!key) {
-        return {
-            statusCode: 400,
-            body: JSON.stringify({ error: 'Query parameter "key" is required' }),
-        };
+        throw validationError('Query parameter "key" is required');
     }
 
     const bucket = process.env.FIRMWARE_BUCKET;
 
     if (!bucket) {
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: 'Firmware bucket not configured' }),
-        };
+        throw internalError('Firmware bucket not configured');
     }
 
-    const url = await getSignedUrl(bucket, key);
-    const head = await getObjectHead(bucket, key);
+    const head = await getObjectHead(bucket, key).catch((error) => {
+        throw isNotFoundError(error) ? notFoundError(`Firmware "${key}" not found`) : error;
+    });
 
+    const url = await getSignedUrl(bucket, key);
     const md5 = head.ETag?.replace(/"/g, '');
 
     return { url, md5 };
-};
+});

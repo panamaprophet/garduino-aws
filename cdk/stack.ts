@@ -20,7 +20,7 @@ export class Garduino extends Stack {
         super(scope, id, props);
 
         this.configuration = new Configuration(this, 'configuration');
-        this.dataCollector = new DataCollector(this, 'data-collector');
+        this.dataCollector = new DataCollector(this, 'data-collector', { configurationTable: this.configuration.table         });
         this.firmware = new Firmware(this, 'firmware');
 
         this.api = new Api(this, 'http-api');
