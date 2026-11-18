@@ -4,6 +4,6 @@ export interface Controller {
     createdAt: string;
 }
 
-export const isAccessibleBy = (controller: Controller | null, userId: string): controller is Controller => {
-    return controller !== null && controller.ownerId === userId;
+export const isOwnedBy = (controller: Controller, userId: string) => {
+    return controller.ownerId === userId;
 };

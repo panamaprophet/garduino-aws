@@ -1,7 +1,7 @@
 import { get, put, queryAll, remove } from '@/shared/db';
 import { Controller } from './controller.model';
 
-export const findController = (controllerId: string) => {
+export const getController = (controllerId: string) => {
     return get<Controller>(process.env.CONTROLLERS_TABLE, { controllerId });
 };
 
@@ -21,8 +21,8 @@ export const saveController = async (controller: Controller) => {
     return controller;
 };
 
-export const removeController = async (controller: Controller) => {
-    await remove(process.env.CONTROLLERS_TABLE, { controllerId: controller.controllerId });
+export const removeController = async (controllerId: string) => {
+    await remove(process.env.CONTROLLERS_TABLE, { controllerId });
 
-    return controller;
+    return { controllerId };
 };

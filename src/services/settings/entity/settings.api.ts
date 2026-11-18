@@ -6,7 +6,7 @@ interface StoredSettings extends SettingsPatch {
     updatedAt: string;
 }
 
-export const findSettings = async (controllerId: string): Promise<SettingsPatch | null> => {
+export const getSettings = async (controllerId: string): Promise<SettingsPatch | null> => {
     const stored = await get<StoredSettings>(process.env.SETTINGS_TABLE, { controllerId });
 
     if (!stored) {

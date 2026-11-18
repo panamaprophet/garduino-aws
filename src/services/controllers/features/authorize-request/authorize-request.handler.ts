@@ -1,8 +1,8 @@
 import { APIGatewayRequestAuthorizerEventV2, APIGatewaySimpleAuthorizerWithContextResult } from 'aws-lambda';
 import { CognitoJwtVerifier } from 'aws-jwt-verify';
 import { RequestContext } from '@/shared/http';
-import { isAccessibleBy } from '../../entity/controller.model';
-import { findController } from '../../entity/controller.repository';
+import { isOwnedBy } from '../../entity/controller.model';
+import { getController } from '../../entity/controller.api';
 
 type AuthorizerResult = APIGatewaySimpleAuthorizerWithContextResult<RequestContext | Record<string, never>>;
 
@@ -13,6 +13,10 @@ const verifier = CognitoJwtVerifier.create({
     tokenUse: 'access',
     clientId: [process.env.WEB_CLIENT_ID!, process.env.MCP_CLIENT_ID!],
 });
+
+const allow = (userId: string): AuthorizerResult => {
+    return { isAuthorized: true, context: { userId } };
+};
 
 const deny = (reason: string): AuthorizerResult => {
     console.warn('request denied:', reason);
@@ -51,9 +55,19 @@ export const handler = async (event: APIGatewayRequestAuthorizerEventV2): Promis
 
     const controllerId = event.pathParameters?.controllerId;
 
-    if (controllerId && !isAccessibleBy(await findController(controllerId), token.sub)) {
-        return deny(`controller ${controllerId} is not accessible`);
+    if (!controllerId) {
+        return allow(token.sub);
     }
 
-    return { isAuthorized: true, context: { userId: token.sub } };
+    const controller = await getController(controllerId);
+
+    if (!controller) {
+        return deny(`controller ${controllerId} not found`);
+    }
+
+    if (!isOwnedBy(controller, token.sub)) {
+        return deny(`controller ${controllerId} is not owned by ${token.sub}`);
+    }
+
+    return allow(token.sub);
 };

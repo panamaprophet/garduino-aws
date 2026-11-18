@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { defineHandler } from '@/shared/http';
 import { attachPolicy, attachThingPrincipal, createCertificates, createMqttPolicy, createThing, getRootCACertificate } from '@/shared/iot';
-import { saveController } from '../../entity/controller.repository';
+import { saveController } from '../../entity/controller.api';
 
 export const handler = defineHandler(async (_event, { userId }) => {
     const controllerId = randomUUID();
