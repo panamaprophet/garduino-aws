@@ -25,7 +25,10 @@ export const createFunction = (scope: Construct, props: FeatureFunctionProps) =>
         handler: 'handler',
         runtime: Runtime.NODEJS_LATEST,
         architecture: Architecture.ARM_64,
-        bundling: { minify: true },
+        bundling: {
+            minify: true,
+            externalModules: ['@aws-sdk/*'],
+        },
         logGroup: createLogGroup(scope, feature),
     });
 };
