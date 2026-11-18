@@ -6,28 +6,26 @@ import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { createLogGroup } from './log-group';
 
-interface ServiceFunctionProps {
+interface FeatureFunctionProps {
     service: string;
-    handler: string;
+    feature: string;
     environment?: Record<string, string>;
     initialPolicy?: PolicyStatement[];
     memorySize?: number;
 }
 
-const toKebabCase = (value: string) => value.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-
-export const createFunction = (scope: Construct, props: ServiceFunctionProps) => {
+export const createFunction = (scope: Construct, props: FeatureFunctionProps) => {
     const { stackName } = Stack.of(scope);
-    const { service, handler, ...rest } = props;
+    const { service, feature, ...rest } = props;
 
-    return new NodejsFunction(scope, handler, {
+    return new NodejsFunction(scope, feature, {
         ...rest,
-        functionName: `${stackName}-${service}-${toKebabCase(handler)}`,
-        entry: join(__dirname, `../../src/services/${service}/index.ts`),
-        handler: `index.${handler}`,
+        functionName: `${stackName}-${feature}`,
+        entry: join(__dirname, `../../src/services/${service}/features/${feature}/${feature}.handler.ts`),
+        handler: 'handler',
         runtime: Runtime.NODEJS_LATEST,
         architecture: Architecture.ARM_64,
         bundling: { minify: true },
-        logGroup: createLogGroup(scope, handler),
+        logGroup: createLogGroup(scope, feature),
     });
 };
