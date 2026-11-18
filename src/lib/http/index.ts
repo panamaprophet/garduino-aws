@@ -17,7 +17,10 @@ const json = (statusCode: number, body: unknown): HttpResult => ({
     body: JSON.stringify(body),
 });
 
-const toErrorResult = (error: unknown) => {
+const toErrorResult = (error: unknown): [
+    statusCode: number,
+    details: Pick<AppError, 'code' | 'message' | 'details'>
+] => {
     const appError = error instanceof AppError ? error : internalError();
 
     if (!(error instanceof AppError) || appError.statusCode >= 500) {
@@ -26,13 +29,13 @@ const toErrorResult = (error: unknown) => {
 
     const { code, statusCode, message, details } = appError;
 
-    return json(statusCode, {
-        error: {
-            code,
-            message,
-            ...(details ? { details } : {}),
-        },
-    });
+    const result = {
+        code,
+        message,
+        ...(details ? { details } : {}),
+    };
+
+    return [statusCode, result];
 };
 
 export const getUserId = (event: HttpEvent) => {
@@ -81,6 +84,8 @@ export const defineHandler = <T>(handler: HandlerFn<T>) => async (event: HttpEve
             meta: { requestId: event.requestContext.requestId },
         });
     } catch (error) {
-        return toErrorResult(error);
+        const [statusCode, details] = toErrorResult(error);
+
+        return json(statusCode, { error: details });
     }
 };
