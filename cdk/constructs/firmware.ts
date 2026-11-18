@@ -2,8 +2,9 @@ import { Construct } from 'constructs';
 import { Stack, RemovalPolicy } from 'aws-cdk-lib';
 import { PolicyStatement, StarPrincipal } from 'aws-cdk-lib/aws-iam';
 import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3';
-import { createFunction } from '@cdk/lib/function';
-import { ServiceProps } from '@cdk/lib/service';
+import { createFunction } from '../lib/function';
+import { ServiceProps } from '../lib/service';
+import { routes } from '@/services/firmware/firmware.config';
 
 export class Firmware extends Construct {
     constructor(scope: Construct, id: string, { api }: ServiceProps) {
@@ -39,6 +40,6 @@ export class Firmware extends Construct {
 
         bucket.grantRead(listFirmware);
 
-        api.addRoute('/v2/firmware', listFirmware);
+        api.addRoute(routes.listFirmware, listFirmware);
     }
 }

@@ -1,9 +1,9 @@
 import { randomUUID } from 'crypto';
 import { defineMessageHandler } from '@/shared/device';
 import { saveEvent } from '../../entity/event.repository';
-import { ingestEventSchema } from './ingest-event.schema';
+import { reportEventSchema } from './report-event.schema';
 
-export const handler = defineMessageHandler(ingestEventSchema, ({ controllerId, receivedAt, payload }) => {
+export const handler = defineMessageHandler(reportEventSchema, ({ controllerId, receivedAt, payload }) => {
     const { type, ...data } = payload;
 
     return saveEvent({

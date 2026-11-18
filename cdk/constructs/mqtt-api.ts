@@ -2,6 +2,7 @@ import { Construct } from 'constructs';
 import { CfnTopicRule } from 'aws-cdk-lib/aws-iot';
 import { ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
+
 export class Mqtt extends Construct {
     constructor(scope: Construct, id: string) {
         super(scope, id);

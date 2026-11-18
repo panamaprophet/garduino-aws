@@ -1,11 +1,11 @@
 import { Construct } from 'constructs';
 import { Stack } from 'aws-cdk-lib';
-import { HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
 import { AttributeType } from 'aws-cdk-lib/aws-dynamodb';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
-import { createFunction } from '@cdk/lib/function';
-import { ServiceProps } from '@cdk/lib/service';
-import { createTable } from '@cdk/lib/table';
+import { createFunction } from '../lib/function';
+import { ServiceProps } from '../lib/service';
+import { createTable } from '../lib/table';
+import { routes, topics } from '@/services/settings/settings.config';
 
 export class Settings extends Construct {
     constructor(scope: Construct, id: string, { api, mqtt }: ServiceProps) {
@@ -20,7 +20,7 @@ export class Settings extends Construct {
         const publishPolicy = new PolicyStatement({
             actions: ['iot:Publish'],
             resources: [
-                Stack.of(this).formatArn({ service: 'iot', resource: 'topic', resourceName: 'controllers/*/settings' }),
+                Stack.of(this).formatArn({ service: 'iot', resource: 'topic', resourceName: topics.settings('*') }),
             ],
         });
 
@@ -39,11 +39,11 @@ export class Settings extends Construct {
         table.grantReadWriteData(updateSettings);
         table.grantReadData(requestSettings);
 
-        api.addRoute('/v2/controllers/{controllerId}/settings', getSettings);
-        api.addRoute('/v2/controllers/{controllerId}/settings', updateSettings, { method: HttpMethod.PATCH });
+        api.addRoute(routes.getSettings, getSettings);
+        api.addRoute(routes.updateSettings, updateSettings);
 
         mqtt.addTopicRule({
-            topic: 'controllers/+/settings/get',
+            topic: topics.request,
             handler: requestSettings,
             select: 'topic(2) AS controllerId',
         });

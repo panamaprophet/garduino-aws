@@ -1,10 +1,10 @@
 import { Construct } from 'constructs';
-import { HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
 import { AttributeType } from 'aws-cdk-lib/aws-dynamodb';
-import { createFunction } from '@cdk/lib/function';
-import { iotAdminPolicy } from '@cdk/lib/policies';
-import { ServiceProps } from '@cdk/lib/service';
-import { createTable } from '@cdk/lib/table';
+import { createFunction } from '../lib/function';
+import { iotAdminPolicy } from '../lib/policies';
+import { ServiceProps } from '../lib/service';
+import { createTable } from '../lib/table';
+import { routes } from '@/services/controllers/controllers.config';
 
 export class Controllers extends Construct {
     constructor(scope: Construct, id: string, { api }: ServiceProps) {
@@ -42,9 +42,9 @@ export class Controllers extends Construct {
         table.grantReadWriteData(removeController);
         table.grantWriteData(createController);
 
-        api.addRoute('/v2/controllers', listControllers);
-        api.addRoute('/v2/controllers', createController, { method: HttpMethod.POST });
-        api.addRoute('/v2/controllers/{controllerId}', getController);
-        api.addRoute('/v2/controllers/{controllerId}', removeController, { method: HttpMethod.DELETE });
+        api.addRoute(routes.listControllers, listControllers);
+        api.addRoute(routes.createController, createController);
+        api.addRoute(routes.getController, getController);
+        api.addRoute(routes.removeController, removeController);
     }
 }

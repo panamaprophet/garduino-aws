@@ -44,14 +44,18 @@ export class Api extends Construct {
         });
     }
 
-    addRoute(path: string, handler: IFunction, options: { method: HttpMethod } = { method: HttpMethod.GET }) {
+    addRoute(routeKey: string, handler: IFunction) {
         const { stackName } = Stack.of(this);
-        const name = `${options.method}${path}`.replace(/\W/g, '');
+        const [method, path] = routeKey.split(' ');
+
+        if (!path || !Object.values<string>(HttpMethod).includes(method!)) {
+            throw new Error(`Invalid route key "${routeKey}", expected "<METHOD> <path>"`);
+        }
 
         this.api.addRoutes({
             path,
-            methods: [options.method],
-            integration: new HttpLambdaIntegration(`${stackName}-api-${name}`, handler),
+            methods: [method as HttpMethod],
+            integration: new HttpLambdaIntegration(`${stackName}-api-${routeKey.replace(/\W/g, '')}`, handler),
         });
     }
 }
