@@ -6,16 +6,18 @@ import { Mqtt } from './constructs/mqtt-api';
 import { Firmware } from './constructs/firmware';
 import { Settings } from './constructs/settings';
 import { Telemetry } from './constructs/telemetry';
+import { Auth } from './constructs/auth';
 import { Controllers } from './constructs/controllers';
 
 export class Garduino extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
 
+        const auth = new Auth(this, 'auth');
         const api = new Api(this, 'http-api');
         const mqtt = new Mqtt(this, 'mqtt-api');
 
-        new Controllers(this, 'controllers', { api, mqtt });
+        new Controllers(this, 'controllers', { api, mqtt, auth });
         new Settings(this, 'settings', { api, mqtt });
         new Telemetry(this, 'telemetry', { api, mqtt });
         new Firmware(this, 'firmware', { api, mqtt });

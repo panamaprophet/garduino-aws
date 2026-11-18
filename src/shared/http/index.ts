@@ -1,13 +1,13 @@
-import { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
+import { APIGatewayProxyEventV2WithLambdaAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { AppError, internalError, unauthorizedError, validationError } from '@/shared/errors';
-
-export type HttpEvent = APIGatewayProxyEventV2WithJWTAuthorizer;
-
-export type HttpResult = APIGatewayProxyStructuredResultV2;
 
 export interface RequestContext {
     userId: string;
 }
+
+export type HttpEvent = APIGatewayProxyEventV2WithLambdaAuthorizer<Partial<RequestContext>>;
+
+export type HttpResult = APIGatewayProxyStructuredResultV2;
 
 type HandlerFn<T> = (event: HttpEvent, context: RequestContext) => Promise<T> | T;
 
@@ -39,13 +39,13 @@ const toErrorResult = (error: unknown): [
 };
 
 export const getUserId = (event: HttpEvent) => {
-    const sub = event.requestContext.authorizer?.jwt?.claims?.sub;
+    const userId = event.requestContext.authorizer?.lambda?.userId;
 
-    if (typeof sub !== 'string' || sub.length === 0) {
+    if (!userId) {
         throw unauthorizedError();
     }
 
-    return sub;
+    return userId;
 };
 
 export const getPathParameter = (event: HttpEvent, name: string) => {
