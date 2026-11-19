@@ -1,24 +1,15 @@
-import { defineHandler, getPathParameter, respond } from '@/shared/http';
-import { parse } from '@/shared/validation';
+import { controllerParams, defineHandler } from '@/shared/http';
 import { listEvents } from '../../entity/event.api';
 import { getSummarySchema } from './get-summary.schema';
 import { summarize } from './get-summary.model';
 
-export const handler = defineHandler(async (event) => {
-    const controllerId = getPathParameter(event, 'controllerId');
-    const query = event.queryStringParameters ?? {};
+export const handler = defineHandler({ params: controllerParams, query: getSummarySchema }, async ({ params: { controllerId }, query }) => {
+    const events = await listEvents(controllerId, query);
 
-    const params = parse(getSummarySchema, query, 'Invalid query parameters');
-    const events = await listEvents(controllerId, params);
-    const buckets = summarize(events, params);
-
+    const data = summarize(events, query);
     const meta = {
-        query: {
-            from: new Date(params.from).toISOString(),
-            to: new Date(params.to).toISOString(),
-            interval: params.interval,
-        },
+        query: { from: new Date(query.from).toISOString(), to: new Date(query.to).toISOString(), interval: query.interval },
     };
 
-    return respond(buckets, { meta });
+    return { data, meta };
 });

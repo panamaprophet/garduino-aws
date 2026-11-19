@@ -1,5 +1,6 @@
 import { APIGatewayRequestAuthorizerEventV2, APIGatewaySimpleAuthorizerWithContextResult } from 'aws-lambda';
 import { CognitoJwtVerifier } from 'aws-jwt-verify';
+import { env } from '@/shared/env';
 import { RequestContext } from '@/shared/http';
 import { isOwnedBy } from '../../entity/controller.model';
 import { getController } from '../../entity/controller.api';
@@ -10,10 +11,14 @@ type AuthorizerResult = APIGatewaySimpleAuthorizerWithContextResult<
 
 const READ_ONLY_METHODS = ['GET', 'HEAD'];
 
+const userPoolId = env('USER_POOL_ID');
+const webClientId = env('WEB_CLIENT_ID');
+const mcpClientId = env('MCP_CLIENT_ID');
+
 const verifier = CognitoJwtVerifier.create({
-    userPoolId: process.env.USER_POOL_ID!,
+    userPoolId,
     tokenUse: 'access',
-    clientId: [process.env.WEB_CLIENT_ID!, process.env.MCP_CLIENT_ID!],
+    clientId: [webClientId, mcpClientId],
 });
 
 const allow = (userId: string): AuthorizerResult => {
@@ -41,7 +46,7 @@ const verifyToken = async (header: string | undefined) => {
 };
 
 const isAllowedMethod = (clientId: string, method: string) => {
-    return clientId !== process.env.MCP_CLIENT_ID || READ_ONLY_METHODS.includes(method);
+    return clientId !== mcpClientId || READ_ONLY_METHODS.includes(method);
 };
 
 export const handler = async (event: APIGatewayRequestAuthorizerEventV2): Promise<AuthorizerResult> => {

@@ -1,23 +1,17 @@
-import { toCursor } from '@/shared/cursor';
-import { defineHandler, getPathParameter, respond } from '@/shared/http';
-import { parse } from '@/shared/validation';
+import { controllerParams, defineHandler, toCursor } from '@/shared/http';
 import { toEventResponse } from '../../entity/event.model';
 import { listEventsPage } from '../../entity/event.api';
 import { listEventsSchema } from './list-events.schema';
 
-export const handler = defineHandler(async (event) => {
-    const controllerId = getPathParameter(event, 'controllerId');
-    const query = event.queryStringParameters ?? {};
+export const handler = defineHandler({ params: controllerParams, query: listEventsSchema }, async ({ params: { controllerId }, query }) => {
+    const { items, lastKey } = await listEventsPage(controllerId, query);
 
-    const params = parse(listEventsSchema, query, 'Invalid query parameters');
-    const { items, lastKey } = await listEventsPage(controllerId, params);
-
-    const events = items.map(toEventResponse);
-    const nextCursor = lastKey ? toCursor({ ...params, lastKey }) : null;
+    const data = items.map(toEventResponse);
+    const nextCursor = lastKey ? toCursor({ ...query, lastKey }) : null;
     const meta = {
-        pagination: { nextCursor, limit: params.limit },
-        query: { from: new Date(params.from).toISOString(), to: new Date(params.to).toISOString() },
+        pagination: { nextCursor, limit: query.limit },
+        query: { from: new Date(query.from).toISOString(), to: new Date(query.to).toISOString() },
     };
 
-    return respond(events, { meta });
+    return { data, meta };
 });

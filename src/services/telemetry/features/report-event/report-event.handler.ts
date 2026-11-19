@@ -1,4 +1,4 @@
-import { defineMessageHandler } from '@/shared/device';
+import { defineMessageHandler } from '@/shared/mqtt';
 import { createEvent } from '../../entity/event.model';
 import { saveEvent, saveLatestEvent } from '../../entity/event.api';
 import { reportEventSchema } from './report-event.schema';

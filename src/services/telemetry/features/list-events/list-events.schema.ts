@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { fromCursor } from '@/shared/cursor';
+import { fromCursor } from '@/shared/http';
 import { rangeSchema } from '../../entity/range.schema';
 
 const orderSchema = z.enum(['asc', 'desc']).default('desc');

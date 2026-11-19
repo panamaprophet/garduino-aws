@@ -1,123 +1,100 @@
-import {
-    ConditionalCheckFailedException,
-    DeleteItemCommand,
-    DynamoDBClient,
-    GetItemCommand,
-    PutItemCommand,
-    QueryCommand,
-} from '@aws-sdk/client-dynamodb';
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
+import { ConditionalCheckFailedException, DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
+import { env } from '@/shared/env';
 
-const client = new DynamoDBClient({});
-
-type Key = Record<string, unknown>;
-
-interface QueryOptions {
-    attributes: Record<string, unknown>;
-    index?: string;
-    filter?: string;
-    limit?: number;
-    scanForward?: boolean;
-    startKey?: Key;
-}
+type Item = Record<string, unknown>;
 
 interface PutOptions {
     condition: string;
-    attributes: Record<string, unknown>;
+    values?: Item;
 }
 
-const extractExpressionAttributes = (attributes: Record<string, unknown>) => {
-    const names: Record<string, string> = {};
-    const values: Record<string, unknown> = {};
+export interface QueryOptions {
+    index?: string;
+    filter?: string;
+    limit?: number;
+    order?: 'asc' | 'desc';
+    startKey?: Item;
+}
 
-    for (const [key, value] of Object.entries(attributes)) {
-        if (key.startsWith('#')) {
-            names[key] = String(value);
-        }
+const client = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
+    marshallOptions: { removeUndefinedValues: true },
+});
 
-        if (key.startsWith(':')) {
-            values[key] = value;
-        }
-    }
+const toNames = (...expressions: Array<string | undefined>) => {
+    const placeholders = expressions.join(' ').match(/#\w+/g) ?? [];
+    const entries = placeholders.map((placeholder) => [placeholder, placeholder.slice(1)]);
 
-    return {
-        names: Object.keys(names).length > 0 ? names : undefined,
-        values: Object.keys(values).length > 0 ? marshall(values) : undefined,
+    return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+};
+
+export const table = <T extends object>(envName: string) => {
+    const name = env(envName);
+
+    const get = async (key: Item) => {
+        const { Item } = await client.send(new GetCommand({ TableName: name, Key: key }));
+
+        return Item ? Item as T : null;
     };
-};
 
-export const get = async <T>(table: string | undefined, key: Key) => {
-    const { Item } = await client.send(new GetItemCommand({
-        TableName: table,
-        Key: marshall(key),
-    }));
-
-    return Item ? unmarshall(Item) as T : null;
-};
-
-export const put = async (table: string | undefined, data: Record<string, unknown>, options?: PutOptions) => {
-    const { names, values } = extractExpressionAttributes(options?.attributes ?? {});
-
-    try {
-        await client.send(new PutItemCommand({
-            TableName: table,
-            Item: marshall(data, { removeUndefinedValues: true }),
+    const put = async (item: T, options?: PutOptions) => {
+        const command = new PutCommand({
+            TableName: name,
+            Item: item as Item,
             ConditionExpression: options?.condition,
-            ExpressionAttributeNames: names,
+            ExpressionAttributeNames: toNames(options?.condition),
+            ExpressionAttributeValues: options?.values,
+        });
+
+        try {
+            await client.send(command);
+
+            return item;
+        } catch (error) {
+            if (error instanceof ConditionalCheckFailedException) {
+                return null;
+            }
+
+            throw error;
+        }
+    };
+
+    const remove = async (key: Item) => {
+        const { Attributes } = await client.send(new DeleteCommand({ TableName: name, Key: key, ReturnValues: 'ALL_OLD' }));
+
+        return Attributes ? Attributes as T : null;
+    };
+
+    const query = async (condition: string, values: Item, options: QueryOptions = {}) => {
+        const { Items, LastEvaluatedKey } = await client.send(new QueryCommand({
+            TableName: name,
+            IndexName: options.index,
+            KeyConditionExpression: condition,
+            FilterExpression: options.filter,
+            ExpressionAttributeNames: toNames(condition, options.filter),
             ExpressionAttributeValues: values,
+            Limit: options.limit,
+            ScanIndexForward: options.order !== 'desc',
+            ExclusiveStartKey: options.startKey,
         }));
 
-        return true;
-    } catch (error) {
-        if (error instanceof ConditionalCheckFailedException) {
-            return false;
-        }
-
-        throw error;
-    }
-};
-
-export const remove = async (table: string | undefined, key: Key) => {
-    const result = await client.send(new DeleteItemCommand({
-        TableName: table,
-        Key: marshall(key),
-    }));
-
-    return result.$metadata.httpStatusCode === 200;
-};
-
-export const query = async <T>(table: string | undefined, expression: string, options: QueryOptions) => {
-    const { names, values } = extractExpressionAttributes(options.attributes);
-
-    const { Items, LastEvaluatedKey } = await client.send(new QueryCommand({
-        TableName: table,
-        KeyConditionExpression: expression,
-        ExpressionAttributeNames: names,
-        ExpressionAttributeValues: values,
-        IndexName: options.index,
-        FilterExpression: options.filter,
-        Limit: options.limit,
-        ScanIndexForward: options.scanForward,
-        ExclusiveStartKey: options.startKey ? marshall(options.startKey) : undefined,
-    }));
-
-    return {
-        items: (Items ?? []).map((item) => unmarshall(item) as T),
-        lastKey: LastEvaluatedKey ? unmarshall(LastEvaluatedKey) : undefined,
+        return { items: (Items ?? []) as T[], lastKey: LastEvaluatedKey };
     };
-};
 
-export const queryAll = async <T>(table: string | undefined, expression: string, options: QueryOptions) => {
-    const items: T[] = [];
+    const queryAll = async (condition: string, values: Item, options: QueryOptions = {}) => {
+        const items: T[] = [];
 
-    let startKey = options.startKey;
+        let startKey = options.startKey;
 
-    do {
-        const page = await query<T>(table, expression, { ...options, startKey });
+        do {
+            const page = await query(condition, values, { ...options, startKey });
 
-        items.push(...page.items);
-        startKey = page.lastKey;
-    } while (startKey);
+            items.push(...page.items);
+            startKey = page.lastKey;
+        } while (startKey);
 
-    return items;
+        return items;
+    };
+
+    return { get, put, remove, query, queryAll };
 };

@@ -1,4 +1,4 @@
-import { put, query, queryAll } from '@/shared/db';
+import { table } from '@/shared/db';
 import { ControllerEvent, toEventId } from './event.model';
 import { Range } from './range.schema';
 
@@ -13,69 +13,62 @@ export interface EventQuery extends Range {
     lastKey?: string;
 }
 
-const toRangeAttributes = (controllerId: string, { from, to }: Range) => ({
-    '#controllerId': 'controllerId',
+const eventsTable = table<ControllerEvent>('EVENTS_TABLE');
+const latestTable = table<ControllerEvent>('LATEST_TABLE');
+
+const toRangeValues = (controllerId: string, { from, to }: Range) => ({
     ':controllerId': controllerId,
-    '#id': 'id',
     ':from': toEventId(from, ''),
     ':to': toEventId(to, '~'),
 });
 
 const toTypeFilter = (types: string[]) => {
     if (types.length === 0) {
-        return { filter: undefined, attributes: {} };
+        return { filter: undefined, values: {} };
     }
 
     const values = Object.fromEntries(types.map((type, index) => [`:type${index}`, type]));
     const filter = `#type IN (${Object.keys(values).join(', ')})`;
 
-    return { filter, attributes: { '#type': 'type', ...values } };
+    return { filter, values };
 };
 
 export const saveEvent = async (event: ControllerEvent) => {
-    await put(process.env.EVENTS_TABLE, { ...event });
+    await eventsTable.put(event);
 
     return event;
 };
 
-export const saveLatestEvent = async (event: ControllerEvent) => {
-    const isSaved = await put(process.env.LATEST_TABLE, { ...event }, {
+export const saveLatestEvent = (event: ControllerEvent) => {
+    return latestTable.put(event, {
         condition: 'attribute_not_exists(#ts) OR #ts < :ts',
-        attributes: { '#ts': 'ts', ':ts': event.ts },
+        values: { ':ts': event.ts },
     });
-
-    return isSaved ? event : null;
 };
 
 export const listLatestEvents = (controllerId: string) => {
-    return queryAll<ControllerEvent>(process.env.LATEST_TABLE, '#controllerId = :controllerId', {
-        attributes: {
-            '#controllerId': 'controllerId',
-            ':controllerId': controllerId,
-        },
-    });
+    return latestTable.queryAll('#controllerId = :controllerId', { ':controllerId': controllerId });
 };
 
 export const listEvents = (controllerId: string, range: Range) => {
-    const attributes = toRangeAttributes(controllerId, range);
+    const values = toRangeValues(controllerId, range);
 
-    return queryAll<ControllerEvent>(process.env.EVENTS_TABLE, RANGE_CONDITION, { attributes });
+    return eventsTable.queryAll(RANGE_CONDITION, values);
 };
 
 export const listEventsPage = async (controllerId: string, { order, limit, types, lastKey, ...range }: EventQuery) => {
-    const { filter, attributes } = toTypeFilter(types);
-    const rangeAttributes = toRangeAttributes(controllerId, range);
+    const typeFilter = toTypeFilter(types);
+    const values = { ...toRangeValues(controllerId, range), ...typeFilter.values };
     const items: ControllerEvent[] = [];
 
     let startKey: Record<string, unknown> | undefined = lastKey ? { controllerId, id: lastKey } : undefined;
     let pages = 0;
 
     do {
-        const page = await query<ControllerEvent>(process.env.EVENTS_TABLE, RANGE_CONDITION, {
-            attributes: { ...rangeAttributes, ...attributes },
-            filter,
+        const page = await eventsTable.query(RANGE_CONDITION, values, {
+            filter: typeFilter.filter,
             limit: limit - items.length,
-            scanForward: order === 'asc',
+            order,
             startKey,
         });
 

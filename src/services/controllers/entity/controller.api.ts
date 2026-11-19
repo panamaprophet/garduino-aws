@@ -1,32 +1,23 @@
-import { get, put, queryAll } from '@/shared/db';
+import { table } from '@/shared/db';
 import { merge } from '@/shared/object';
 import { Controller, markControllerDeleted } from './controller.model';
 
-const replaceActiveController = async (controller: Controller) => {
-    const isReplaced = await put(process.env.CONTROLLERS_TABLE, { ...controller }, {
-        condition: 'attribute_exists(#ownerId)',
-        attributes: { '#ownerId': 'ownerId' },
-    });
+const controllersTable = table<Controller>('CONTROLLERS_TABLE');
 
-    return isReplaced ? controller : null;
+const replaceActiveController = (controller: Controller) => {
+    return controllersTable.put(controller, { condition: 'attribute_exists(#ownerId)' });
 };
 
 export const getController = (controllerId: string) => {
-    return get<Controller>(process.env.CONTROLLERS_TABLE, { controllerId });
+    return controllersTable.get({ controllerId });
 };
 
 export const listControllersByOwner = (ownerId: string) => {
-    return queryAll<Controller>(process.env.CONTROLLERS_TABLE, '#ownerId = :ownerId', {
-        attributes: {
-            '#ownerId': 'ownerId',
-            ':ownerId': ownerId,
-        },
-        index: 'ownerId_Index',
-    });
+    return controllersTable.queryAll('#ownerId = :ownerId', { ':ownerId': ownerId }, { index: 'ownerId_Index' });
 };
 
 export const saveController = async (controller: Controller) => {
-    await put(process.env.CONTROLLERS_TABLE, { ...controller });
+    await controllersTable.put(controller);
 
     return controller;
 };

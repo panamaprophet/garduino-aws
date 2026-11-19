@@ -1,18 +1,13 @@
-import { notFoundError } from '@/shared/errors';
-import { defineHandler, getPathParameter } from '@/shared/http';
-import { deactivateCertificate, listThingCertificates } from '@/shared/iot';
+import { controllerParams, defineHandler, notFound } from '@/shared/http';
 import { removeController } from '../../entity/controller.api';
+import { deactivateCertificate, listThingCertificates } from '../../entity/thing.api';
 
-export const handler = defineHandler(async (event) => {
-    const controllerId = getPathParameter(event, 'controllerId');
-
+export const handler = defineHandler({ params: controllerParams }, async ({ params: { controllerId } }) => {
     const certificates = await listThingCertificates(controllerId);
     const revokedCertificates = await Promise.all(certificates.map(deactivateCertificate));
-    const controller = await removeController(controllerId);
+    const controller = await removeController(controllerId) ?? notFound(`Controller "${controllerId}" not found`);
 
-    if (!controller) {
-        throw notFoundError(`Controller "${controllerId}" not found`);
-    }
+    const data = { controllerId, deletedAt: controller.deletedAt, revokedCertificates };
 
-    return { controllerId, deletedAt: controller.deletedAt, revokedCertificates };
+    return { data };
 });

@@ -1,20 +1,18 @@
-import { defineHandler, getJsonBody, getPathParameter, respond } from '@/shared/http';
+import { env } from '@/shared/env';
+import { controllerParams, defineHandler } from '@/shared/http';
 import { publish } from '@/shared/mqtt';
-import { parse } from '@/shared/validation';
 import { toDeviceCommand } from '../../entity/command.model';
 import { topics } from '../../controllers.config';
 import { sendCommandSchema } from './send-command.schema';
 
-export const handler = defineHandler(async (event) => {
-    const controllerId = getPathParameter(event, 'controllerId');
-    const body = getJsonBody(event);
+const firmwareBaseUrl = env('FIRMWARE_BASE_URL');
 
-    const command = parse(sendCommandSchema, body, 'Invalid command');
-    const payload = toDeviceCommand(command, process.env.FIRMWARE_BASE_URL!);
+export const handler = defineHandler({ params: controllerParams, body: sendCommandSchema }, async ({ params: { controllerId }, body }) => {
+    const payload = toDeviceCommand(body, firmwareBaseUrl);
 
     await publish(topics.commands(controllerId), payload);
 
-    const response = { type: command.type, issuedAt: new Date().toISOString() };
+    const data = { type: body.type, issuedAt: new Date().toISOString() };
 
-    return respond(response, { statusCode: 202 });
+    return { data, status: 202 };
 });

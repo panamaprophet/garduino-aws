@@ -1,4 +1,4 @@
-import { get, put } from '@/shared/db';
+import { table } from '@/shared/db';
 import { DeepPartial, merge } from '@/shared/object';
 import { defaultSettings, Settings } from './settings.model';
 
@@ -7,8 +7,10 @@ interface StoredSettings extends DeepPartial<Settings> {
     updatedAt: string;
 }
 
+const settingsTable = table<StoredSettings>('SETTINGS_TABLE');
+
 export const getSettings = async (controllerId: string) => {
-    const stored = await get<StoredSettings>(process.env.SETTINGS_TABLE, { controllerId });
+    const stored = await settingsTable.get({ controllerId });
 
     if (!stored) {
         return defaultSettings;
@@ -20,11 +22,9 @@ export const getSettings = async (controllerId: string) => {
 };
 
 export const saveSettings = async (controllerId: string, settings: Settings) => {
-    await put(process.env.SETTINGS_TABLE, {
-        ...settings,
-        controllerId,
-        updatedAt: new Date().toISOString(),
-    });
+    const updatedAt = new Date().toISOString();
+
+    await settingsTable.put({ ...settings, controllerId, updatedAt });
 
     return settings;
 };

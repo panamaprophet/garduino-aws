@@ -1,20 +1,12 @@
-import { notFoundError } from '@/shared/errors';
-import { defineHandler, getJsonBody, getPathParameter } from '@/shared/http';
-import { parse } from '@/shared/validation';
+import { controllerParams, defineHandler, notFound } from '@/shared/http';
 import { toControllerResponse } from '../../entity/controller.model';
 import { updateController } from '../../entity/controller.api';
 import { updateControllerSchema } from './update-controller.schema';
 
-export const handler = defineHandler(async (event) => {
-    const controllerId = getPathParameter(event, 'controllerId');
-    const body = getJsonBody(event);
+export const handler = defineHandler({ params: controllerParams, body: updateControllerSchema }, async ({ params: { controllerId }, body }) => {
+    const controller = await updateController(controllerId, body) ?? notFound(`Controller "${controllerId}" not found`);
 
-    const changes = parse(updateControllerSchema, body, 'Invalid controller');
-    const controller = await updateController(controllerId, changes);
+    const data = toControllerResponse(controller);
 
-    if (!controller) {
-        throw notFoundError(`Controller "${controllerId}" not found`);
-    }
-
-    return toControllerResponse(controller);
+    return { data };
 });
