@@ -1,33 +1,19 @@
 import { randomUUID } from 'crypto';
-import { defineHandler } from '@/shared/http';
-import { attachPolicy, attachThingPrincipal, createCertificates, createMqttPolicy, createThing, getRootCACertificate } from '@/shared/iot';
+import { defineHandler, getJsonBody, respond } from '@/shared/http';
+import { createThing, issueCertificate } from '@/shared/iot';
+import { parse } from '@/shared/validation';
+import { createController, toControllerResponse } from '../../entity/controller.model';
 import { saveController } from '../../entity/controller.api';
+import { createControllerSchema } from './create-controller.schema';
 
-export const handler = defineHandler(async (_event, { userId }) => {
+export const handler = defineHandler(async (event, { userId }) => {
+    const { name } = parse(createControllerSchema, getJsonBody(event), 'Invalid controller');
     const controllerId = randomUUID();
 
     await createThing(controllerId);
 
-    const policy = await createMqttPolicy(controllerId);
-    const certificates = await createCertificates();
-    const rootCertificate = await getRootCACertificate();
+    const certificates = await issueCertificate(controllerId, process.env.DEVICE_POLICY_NAME!);
+    const controller = await saveController(createController(controllerId, userId, name));
 
-    await attachPolicy(policy.policyName!, certificates.certificateArn!);
-    await attachThingPrincipal(controllerId, certificates.certificateArn!);
-
-    const controller = await saveController({
-        controllerId,
-        ownerId: userId,
-        createdAt: new Date().toISOString(),
-    });
-
-    return {
-        ...controller,
-        certificates: {
-            root: rootCertificate,
-            pem: certificates.certificatePem,
-            privateKey: certificates.keyPair?.PrivateKey,
-            publicKey: certificates.keyPair?.PublicKey,
-        },
-    };
+    return respond({ ...toControllerResponse(controller), certificates }, { statusCode: 201 });
 });

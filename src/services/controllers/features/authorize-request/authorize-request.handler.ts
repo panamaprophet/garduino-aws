@@ -4,7 +4,9 @@ import { RequestContext } from '@/shared/http';
 import { isOwnedBy } from '../../entity/controller.model';
 import { getController } from '../../entity/controller.api';
 
-type AuthorizerResult = APIGatewaySimpleAuthorizerWithContextResult<RequestContext | Record<string, never>>;
+type AuthorizerResult = APIGatewaySimpleAuthorizerWithContextResult<
+    RequestContext | Record<string, never>
+>;
 
 const READ_ONLY_METHODS = ['GET', 'HEAD'];
 
@@ -49,7 +51,10 @@ export const handler = async (event: APIGatewayRequestAuthorizerEventV2): Promis
         return deny('invalid token');
     }
 
-    if (!isAllowedMethod(token.client_id, event.requestContext.http.method)) {
+    const clientId = token.client_id;
+    const requestMethod = event.requestContext.http.method;
+
+    if (!isAllowedMethod(clientId, requestMethod)) {
         return deny(`client ${token.client_id} is read-only`);
     }
 

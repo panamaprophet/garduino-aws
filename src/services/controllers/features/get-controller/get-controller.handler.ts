@@ -1,5 +1,6 @@
 import { notFoundError } from '@/shared/errors';
 import { defineHandler, getPathParameter } from '@/shared/http';
+import { toControllerResponse } from '../../entity/controller.model';
 import { getController } from '../../entity/controller.api';
 
 export const handler = defineHandler(async (event) => {
@@ -10,5 +11,5 @@ export const handler = defineHandler(async (event) => {
         throw notFoundError(`Controller "${controllerId}" not found`);
     }
 
-    return controller;
+    return toControllerResponse(controller);
 });

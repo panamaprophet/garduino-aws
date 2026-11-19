@@ -11,11 +11,21 @@ export type HttpResult = APIGatewayProxyStructuredResultV2;
 
 type HandlerFn<T> = (event: HttpEvent, context: RequestContext) => Promise<T> | T;
 
+interface ResponseOptions {
+    statusCode: number;
+}
+
+class HttpResponse<T> {
+    constructor(readonly data: T, readonly options: ResponseOptions) {}
+}
+
 const json = (statusCode: number, body: unknown): HttpResult => ({
     statusCode,
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
 });
+
+export const respond = <T>(data: T, options: ResponseOptions) => new HttpResponse(data, options);
 
 const toErrorResult = (error: unknown): [
     statusCode: number,
@@ -77,9 +87,13 @@ export const getJsonBody = (event: HttpEvent): unknown => {
 export const defineHandler = <T>(handler: HandlerFn<T>) => async (event: HttpEvent): Promise<HttpResult> => {
     try {
         const userId = getUserId(event);
-        const data = await handler(event, { userId });
+        const result = await handler(event, { userId });
 
-        return json(200, {
+        const { data, options } = result instanceof HttpResponse
+          ? result
+          : { data: result, options: { statusCode: 200 } };
+
+        return json(options.statusCode, {
             data,
             meta: { requestId: event.requestContext.requestId },
         });

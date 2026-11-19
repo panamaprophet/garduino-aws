@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { validationError } from '@/shared/errors';
 
-export const parse = <T extends z.ZodType>(schema: T, input: unknown, message = 'Invalid request'): z.output<T> => {
+export const parse = <T extends z.ZodType>(
+    schema: T,
+    input: unknown,
+    errorMessage = 'Invalid request'
+): z.output<T> => {
     const result = schema.safeParse(input);
 
     if (!result.success) {
@@ -10,7 +14,7 @@ export const parse = <T extends z.ZodType>(schema: T, input: unknown, message = 
             message: issue.message,
         }));
 
-        throw validationError(message, details);
+        throw validationError(errorMessage, details);
     }
 
     return result.data;

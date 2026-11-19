@@ -1,6 +1,6 @@
 import { join } from 'path';
 import { Construct } from 'constructs';
-import { Stack } from 'aws-cdk-lib';
+import { Duration, Stack } from 'aws-cdk-lib';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
@@ -12,6 +12,7 @@ interface FeatureFunctionProps {
     environment?: Record<string, string>;
     initialPolicy?: PolicyStatement[];
     memorySize?: number;
+    timeout?: Duration;
 }
 
 export const createFunction = (scope: Construct, props: FeatureFunctionProps) => {

@@ -1,5 +1,14 @@
-import { get, put, queryAll, remove } from '@/shared/db';
-import { Controller } from './controller.model';
+import { get, put, queryAll } from '@/shared/db';
+import { applyControllerChanges, Controller, ControllerChanges, markControllerDeleted } from './controller.model';
+
+const replaceActiveController = async (controller: Controller) => {
+    const isReplaced = await put(process.env.CONTROLLERS_TABLE, { ...controller }, {
+        condition: 'attribute_exists(#ownerId)',
+        attributes: { '#ownerId': 'ownerId' },
+    });
+
+    return isReplaced ? controller : null;
+};
 
 export const getController = (controllerId: string) => {
     return get<Controller>(process.env.CONTROLLERS_TABLE, { controllerId });
@@ -21,8 +30,22 @@ export const saveController = async (controller: Controller) => {
     return controller;
 };
 
-export const removeController = async (controllerId: string) => {
-    await remove(process.env.CONTROLLERS_TABLE, { controllerId });
+export const updateController = async (controllerId: string, changes: ControllerChanges) => {
+    const controller = await getController(controllerId);
 
-    return { controllerId };
+    if (!controller) {
+        return null;
+    }
+
+    return replaceActiveController(applyControllerChanges(controller, changes));
+};
+
+export const removeController = async (controllerId: string) => {
+    const controller = await getController(controllerId);
+
+    if (!controller) {
+        return null;
+    }
+
+    return replaceActiveController(markControllerDeleted(controller));
 };

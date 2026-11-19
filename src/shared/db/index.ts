@@ -1,4 +1,11 @@
-import { DeleteItemCommand, GetItemCommand, PutItemCommand, QueryCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import {
+    ConditionalCheckFailedException,
+    DeleteItemCommand,
+    DynamoDBClient,
+    GetItemCommand,
+    PutItemCommand,
+    QueryCommand,
+} from '@aws-sdk/client-dynamodb';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 
 const client = new DynamoDBClient({});
@@ -12,6 +19,11 @@ interface QueryOptions {
     limit?: number;
     scanForward?: boolean;
     startKey?: Key;
+}
+
+interface PutOptions {
+    condition: string;
+    attributes: Record<string, unknown>;
 }
 
 const extractExpressionAttributes = (attributes: Record<string, unknown>) => {
@@ -28,7 +40,10 @@ const extractExpressionAttributes = (attributes: Record<string, unknown>) => {
         }
     }
 
-    return { names, values: marshall(values) };
+    return {
+        names: Object.keys(names).length > 0 ? names : undefined,
+        values: Object.keys(values).length > 0 ? marshall(values) : undefined,
+    };
 };
 
 export const get = async <T>(table: string | undefined, key: Key) => {
@@ -40,13 +55,26 @@ export const get = async <T>(table: string | undefined, key: Key) => {
     return Item ? unmarshall(Item) as T : null;
 };
 
-export const put = async (table: string | undefined, data: Record<string, unknown>) => {
-    const result = await client.send(new PutItemCommand({
-        TableName: table,
-        Item: marshall(data, { removeUndefinedValues: true }),
-    }));
+export const put = async (table: string | undefined, data: Record<string, unknown>, options?: PutOptions) => {
+    const { names, values } = extractExpressionAttributes(options?.attributes ?? {});
 
-    return result.$metadata.httpStatusCode === 200;
+    try {
+        await client.send(new PutItemCommand({
+            TableName: table,
+            Item: marshall(data, { removeUndefinedValues: true }),
+            ConditionExpression: options?.condition,
+            ExpressionAttributeNames: names,
+            ExpressionAttributeValues: values,
+        }));
+
+        return true;
+    } catch (error) {
+        if (error instanceof ConditionalCheckFailedException) {
+            return false;
+        }
+
+        throw error;
+    }
 };
 
 export const remove = async (table: string | undefined, key: Key) => {

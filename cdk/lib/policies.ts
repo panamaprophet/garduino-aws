@@ -1,13 +1,14 @@
 import { PolicyStatement, Effect } from 'aws-cdk-lib/aws-iam';
 
-export const iotAdminPolicy = new PolicyStatement({
+export const iotProvisioningPolicy = new PolicyStatement({
     effect: Effect.ALLOW,
     actions: [
-        'iot:AttachPolicy',
+        'iot:CreateThing',
+        'iot:ListThingPrincipals',
         'iot:AttachThingPrincipal',
         'iot:CreateKeysAndCertificate',
-        'iot:CreatePolicy',
-        'iot:CreateThing',
+        'iot:UpdateCertificate',
+        'iot:AttachPolicy',
     ],
     resources: ['*'],
 });
