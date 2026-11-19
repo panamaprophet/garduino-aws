@@ -1,21 +1,22 @@
 import { get, put } from '@/shared/db';
-import { Settings, SettingsPatch } from './settings.model';
+import { DeepPartial, merge } from '@/shared/object';
+import { defaultSettings, Settings } from './settings.model';
 
-interface StoredSettings extends SettingsPatch {
+interface StoredSettings extends DeepPartial<Settings> {
     controllerId: string;
     updatedAt: string;
 }
 
-export const getSettings = async (controllerId: string): Promise<SettingsPatch | null> => {
+export const getSettings = async (controllerId: string) => {
     const stored = await get<StoredSettings>(process.env.SETTINGS_TABLE, { controllerId });
 
     if (!stored) {
-        return null;
+        return defaultSettings;
     }
 
-    const { timezone, light, fan, sensor } = stored;
+    const { light, fan, sensor } = stored;
 
-    return { timezone, light, fan, sensor };
+    return merge(defaultSettings, { light, fan, sensor });
 };
 
 export const saveSettings = async (controllerId: string, settings: Settings) => {

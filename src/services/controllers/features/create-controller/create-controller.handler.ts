@@ -7,13 +7,16 @@ import { saveController } from '../../entity/controller.api';
 import { createControllerSchema } from './create-controller.schema';
 
 export const handler = defineHandler(async (event, { userId }) => {
-    const { name } = parse(createControllerSchema, getJsonBody(event), 'Invalid controller');
+    const body = getJsonBody(event);
     const controllerId = randomUUID();
 
-    await createThing(controllerId);
+    const { name } = parse(createControllerSchema, body, 'Invalid controller');
+    const thingName = await createThing(controllerId);
+    const certificates = await issueCertificate(thingName, process.env.DEVICE_POLICY_NAME!);
+    const created = createController(controllerId, userId, name);
+    const controller = await saveController(created);
 
-    const certificates = await issueCertificate(controllerId, process.env.DEVICE_POLICY_NAME!);
-    const controller = await saveController(createController(controllerId, userId, name));
+    const response = { ...toControllerResponse(controller), certificates };
 
-    return respond({ ...toControllerResponse(controller), certificates }, { statusCode: 201 });
+    return respond(response, { statusCode: 201 });
 });

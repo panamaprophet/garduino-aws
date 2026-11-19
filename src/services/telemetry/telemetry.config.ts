@@ -3,5 +3,5 @@ export const routes = {
 };
 
 export const topics = {
-    'events': 'controllers/+/events',
+    'telemetry': 'controllers/+/telemetry',
 };

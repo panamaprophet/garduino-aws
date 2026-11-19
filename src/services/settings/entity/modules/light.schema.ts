@@ -5,7 +5,7 @@ const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
 export const lightSchema = z.object({
     onTime: z
         .string()
-        .regex(/^([01]\d|2[0-3]):[0-5]\d$/, { error: 'must be a local time of day in HH:mm format' }),
+        .regex(/^([01]\d|2[0-3]):[0-5]\d$/, { error: 'must be a UTC time of day in HH:mm format' }),
     durationMs: z
         .number()
         .int()
@@ -17,5 +17,5 @@ export type Light = z.output<typeof lightSchema>;
 
 export const lightDefaults: Light = {
     onTime: '12:00',
-    durationMs: 12 * 60 * 60 * 1000,
+    durationMs: DAY_IN_MILLISECONDS / 2,
 };

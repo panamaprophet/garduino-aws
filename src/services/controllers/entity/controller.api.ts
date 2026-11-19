@@ -1,5 +1,6 @@
 import { get, put, queryAll } from '@/shared/db';
-import { applyControllerChanges, Controller, ControllerChanges, markControllerDeleted } from './controller.model';
+import { merge } from '@/shared/object';
+import { Controller, markControllerDeleted } from './controller.model';
 
 const replaceActiveController = async (controller: Controller) => {
     const isReplaced = await put(process.env.CONTROLLERS_TABLE, { ...controller }, {
@@ -30,14 +31,17 @@ export const saveController = async (controller: Controller) => {
     return controller;
 };
 
-export const updateController = async (controllerId: string, changes: ControllerChanges) => {
+export const updateController = async (controllerId: string, changes: Partial<Controller>) => {
     const controller = await getController(controllerId);
 
     if (!controller) {
         return null;
     }
 
-    return replaceActiveController(applyControllerChanges(controller, changes));
+    const updatedAt = new Date().toISOString();
+    const updated = merge(controller, { ...changes, updatedAt });
+
+    return replaceActiveController(updated);
 };
 
 export const removeController = async (controllerId: string) => {
@@ -47,5 +51,7 @@ export const removeController = async (controllerId: string) => {
         return null;
     }
 
-    return replaceActiveController(markControllerDeleted(controller));
+    const deleted = markControllerDeleted(controller);
+
+    return replaceActiveController(deleted);
 };

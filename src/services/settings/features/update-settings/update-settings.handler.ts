@@ -1,14 +1,23 @@
 import { defineHandler, getJsonBody, getPathParameter } from '@/shared/http';
+import { publish } from '@/shared/mqtt';
+import { merge } from '@/shared/object';
 import { parse } from '@/shared/validation';
-import { applySettingsPatch, resolveSettings } from '../../entity/settings.model';
+import { toDeviceSettings } from '../../entity/settings.model';
 import { getSettings, saveSettings } from '../../entity/settings.api';
+import { topics } from '../../settings.config';
 import { updateSettingsSchema } from './update-settings.schema';
 
 export const handler = defineHandler(async (event) => {
     const controllerId = getPathParameter(event, 'controllerId');
-    const patch = parse(updateSettingsSchema, getJsonBody(event), 'Invalid settings');
+    const body = getJsonBody(event);
 
-    const current = resolveSettings(await getSettings(controllerId));
+    const changes = parse(updateSettingsSchema, body, 'Invalid settings');
+    const current = await getSettings(controllerId);
+    const updated = merge(current, changes);
+    const settings = await saveSettings(controllerId, updated);
+    const payload = toDeviceSettings(settings);
 
-    return saveSettings(controllerId, applySettingsPatch(current, patch));
+    await publish(topics.settings(controllerId), payload);
+
+    return settings;
 });

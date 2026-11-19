@@ -20,8 +20,10 @@ const getRootCACertificate = async () => {
     return response.text();
 };
 
-export const createThing = (thingName: string) => {
-    return client.send(new CreateThingCommand({ thingName }));
+export const createThing = async (thingName: string) => {
+    await client.send(new CreateThingCommand({ thingName }));
+
+    return thingName;
 };
 
 export const listThingCertificates = async (thingName: string) => {
@@ -51,7 +53,9 @@ export const issueCertificate = async (thingName: string, policyName: string) =>
 };
 
 export const deactivateCertificate = async (certificateArn: string) => {
-    const certificateId = certificateArn.split('/').pop()!;
+    const [, certificateId] = certificateArn.split('/');
 
     await client.send(new UpdateCertificateCommand({ certificateId, newStatus: CertificateStatus.INACTIVE }));
+
+    return certificateId;
 };

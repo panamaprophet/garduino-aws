@@ -27,7 +27,12 @@ export class Settings extends Construct {
         const environment = { SETTINGS_TABLE: table.tableName };
 
         const getSettings = createFunction(this, { service: 'settings', feature: 'get-settings', environment });
-        const updateSettings = createFunction(this, { service: 'settings', feature: 'update-settings', environment });
+        const updateSettings = createFunction(this, {
+            service: 'settings',
+            feature: 'update-settings',
+            environment,
+            initialPolicy: [publishPolicy],
+        });
         const requestSettings = createFunction(this, {
             service: 'settings',
             feature: 'request-settings',

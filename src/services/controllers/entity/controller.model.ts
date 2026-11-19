@@ -8,8 +8,6 @@ export interface Controller {
     deletedAt?: string;
 }
 
-export type ControllerChanges = Partial<Pick<Controller, 'name'>>;
-
 export const createController = (controllerId: string, ownerId: string, name: string): Controller => {
     const now = new Date().toISOString();
 
@@ -21,12 +19,6 @@ export const createController = (controllerId: string, ownerId: string, name: st
         updatedAt: now,
     };
 };
-
-export const applyControllerChanges = (controller: Controller, changes: ControllerChanges): Controller => ({
-    ...controller,
-    ...changes,
-    updatedAt: new Date().toISOString(),
-});
 
 export const markControllerDeleted = ({ ownerId, ...controller }: Controller): Controller => {
     const now = new Date().toISOString();

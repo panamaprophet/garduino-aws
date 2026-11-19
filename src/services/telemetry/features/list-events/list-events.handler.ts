@@ -6,8 +6,9 @@ import { listEventsSchema } from './list-events.schema';
 
 export const handler = defineHandler(async (event) => {
     const controllerId = getPathParameter(event, 'controllerId');
-    const range = parse(listEventsSchema, event.queryStringParameters ?? {}, 'Invalid query parameters');
+    const query = event.queryStringParameters ?? {};
 
+    const range = parse(listEventsSchema, query, 'Invalid query parameters');
     const events = await listEvents(controllerId, range);
 
     return events.map(toEventResponse);

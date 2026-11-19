@@ -3,12 +3,10 @@ import { deactivateCertificate, issueCertificate, listThingCertificates } from '
 
 export const handler = defineHandler(async (event) => {
     const controllerId = getPathParameter(event, 'controllerId');
+
     const previousCertificates = await listThingCertificates(controllerId);
     const certificates = await issueCertificate(controllerId, process.env.DEVICE_POLICY_NAME!);
+    const revokedCertificates = await Promise.all(previousCertificates.map(deactivateCertificate));
 
-    for (const certificateArn of previousCertificates) {
-        await deactivateCertificate(certificateArn);
-    }
-
-    return { controllerId, certificates };
+    return { controllerId, certificates, revokedCertificates };
 });
