@@ -47,6 +47,7 @@ export class Controllers extends Construct {
         const provisioningPolicy = new PolicyStatement({
             actions: [
                 'iot:CreateThing',
+                'iot:DescribeEndpoint',
                 'iot:ListThingPrincipals',
                 'iot:AttachThingPrincipal',
                 'iot:CreateKeysAndCertificate',

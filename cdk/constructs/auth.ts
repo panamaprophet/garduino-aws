@@ -1,12 +1,8 @@
 import { Construct } from 'constructs';
-import { Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
+import { Duration, Fn, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { AccountRecovery, OAuthScope, UserPool, UserPoolClientIdentityProvider } from 'aws-cdk-lib/aws-cognito';
 
-const MCP_CALLBACK_URL = 'http://localhost:8765/callback';
-
-interface AuthProps {
-    domainPrefix: string;
-}
+const MCP_CALLBACK_PORTS = [8765, 8766, 8767];
 
 export class Auth extends Construct {
     readonly userPoolId: string;
@@ -14,10 +10,14 @@ export class Auth extends Construct {
     readonly mcpClientId: string;
     readonly domainUrl: string;
 
-    constructor(scope: Construct, id: string, { domainPrefix }: AuthProps) {
+    constructor(scope: Construct, id: string) {
         super(scope, id);
 
-        const { stackName } = Stack.of(this);
+        const { stackName, stackId } = Stack.of(this);
+
+        const stackUuid = Fn.select(2, Fn.split('/', stackId));
+        const domainSuffix = Fn.select(4, Fn.split('-', stackUuid));
+        const mcpCallbackUrls = MCP_CALLBACK_PORTS.map((port) => `http://localhost:${port}/callback`);
 
         const userPool = new UserPool(this, 'user-pool', {
             userPoolName: `${stackName}-users`,
@@ -32,7 +32,7 @@ export class Auth extends Construct {
         });
 
         const domain = userPool.addDomain('domain', {
-            cognitoDomain: { domainPrefix },
+            cognitoDomain: { domainPrefix: `${stackName}-${domainSuffix}` },
         });
 
         const webClient = userPool.addClient('web-client', {
@@ -52,7 +52,7 @@ export class Auth extends Construct {
             oAuth: {
                 flows: { authorizationCodeGrant: true },
                 scopes: [OAuthScope.OPENID],
-                callbackUrls: [MCP_CALLBACK_URL],
+                callbackUrls: mcpCallbackUrls,
             },
             supportedIdentityProviders: [UserPoolClientIdentityProvider.COGNITO],
             preventUserExistenceErrors: true,

@@ -8,18 +8,14 @@ import { Settings } from './constructs/settings';
 import { Telemetry } from './constructs/telemetry';
 import { Firmware } from './constructs/firmware';
 
-interface GarduinoProps extends StackProps {
-    authDomainPrefix: string;
-}
-
 export class Garduino extends Stack {
-    constructor(scope: Construct, id: string, { authDomainPrefix, ...props }: GarduinoProps) {
+    constructor(scope: Construct, id: string, props: StackProps) {
         super(scope, id, props);
 
         const firmwareBucketName = `${this.stackName}-firmware`;
         const firmwareBaseUrl = `https://${firmwareBucketName}.s3.${this.region}.amazonaws.com`;
 
-        const auth = new Auth(this, 'auth', { domainPrefix: authDomainPrefix });
+        const auth = new Auth(this, 'auth');
         const api = new Api(this, 'http-api');
         const mqtt = new Mqtt(this, 'mqtt-api');
 

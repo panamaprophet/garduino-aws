@@ -102,7 +102,6 @@ Copy `.env.example` to `.env` and fill in the values:
 
 ```
 API_VERSION=v2
-AUTH_DOMAIN_PREFIX=auth_domain_prefix
 
 AWS_REGION=eu-west-1
 AWS_ACCESS_KEY_ID=...
@@ -110,9 +109,7 @@ AWS_SECRET_ACCESS_KEY=...
 ```
 
 - `API_VERSION` — used to namespace the entire deployment. The CDK stack is named `garduino-{API_VERSION}` (e.g., `garduino-v1`), and all resources (DynamoDB tables, S3 buckets, Lambda functions, API Gateway) include this version in their names. This allows running multiple independent versions of the stack side-by-side.
-- `AUTH_DOMAIN_PREFIX` — prefix of the Cognito sign-in domain (`https://<prefix>.auth.<region>.amazoncognito.com`), used by the MCP client. Prefixes are global within a region.
-
-The stack owns the Cognito user pool. Self sign-up is disabled: users are created by an admin. The stack outputs `UserPoolId`, `WebClientId`, `McpClientId` and `AuthDomain` for the web app and the MCP server.
+The stack owns the Cognito user pool. Self sign-up is disabled: users are created by an admin. The Cognito sign-in domain used by the MCP client is `<stack name>-<suffix of the stack id>`, unique without any configuration. The stack outputs `UserPoolId`, `WebClientId`, `McpClientId` and `AuthDomain` for the web app and the MCP server.
 
 ## Deployment
 
@@ -138,7 +135,7 @@ This runs `cdk deploy` which synthesizes and deploys the CloudFormation stack.
 
 ### CI/CD
 
-Pushes to `main` trigger a GitHub Actions workflow (`.github/workflows/deploy.yml`) that type-checks and deploys automatically. Required GitHub secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`. Required GitHub variables: `AWS_REGION`, `API_VERSION`, `AUTH_DOMAIN_PREFIX`.
+Pushes to `main` trigger a GitHub Actions workflow (`.github/workflows/deploy.yml`) that type-checks and deploys automatically. Required GitHub secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`. Required GitHub variables: `AWS_REGION`, `API_VERSION`.
 
 ### IoT Endpoint
 

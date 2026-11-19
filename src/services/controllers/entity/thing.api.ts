@@ -4,6 +4,7 @@ import {
     CertificateStatus,
     CreateKeysAndCertificateCommand,
     CreateThingCommand,
+    DescribeEndpointCommand,
     IoTClient,
     ListThingPrincipalsCommand,
     ResourceNotFoundException,
@@ -19,6 +20,16 @@ const getRootCertificate = async () => {
     const response = await fetch(ROOT_CERTIFICATE_URL);
 
     return response.text();
+};
+
+export const getEndpoint = async () => {
+    const { endpointAddress } = await client.send(new DescribeEndpointCommand({ endpointType: 'iot:Data-ATS' }));
+
+    if (!endpointAddress) {
+        throw new Error('IoT returned no data endpoint');
+    }
+
+    return endpointAddress;
 };
 
 export const createThing = async (thingName: string) => {
