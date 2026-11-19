@@ -1,25 +1,28 @@
 import { z } from 'zod';
+import { fromCursor } from '@/shared/cursor';
+import { rangeSchema } from '../../entity/range.schema';
 
-const DAY_IN_MILLISECONDS = 24 * 60 * 60 * 1000;
-const MAX_RANGE_IN_DAYS = 31;
+const orderSchema = z.enum(['asc', 'desc']).default('desc');
 
-const instant = z.iso
-    .datetime({ offset: true, error: 'must be an RFC 3339 date-time, e.g. 2026-11-17T10:00:00Z' })
-    .transform((value) => Date.parse(value))
-    .optional();
+const limitSchema = z.coerce.number().int().min(1).max(1000).default(100);
 
-export const listEventsSchema = z
-    .object({
-        from: instant,
-        to: instant,
-    })
-    .transform(({ from, to }) => {
-        const end = to ?? Date.now();
+const cursorSchema = z
+    .string()
+    .transform(fromCursor)
+    .pipe(z.object({
+        from: z.number(),
+        to: z.number(),
+        order: orderSchema,
+        limit: limitSchema,
+        types: z.array(z.string()),
+        lastKey: z.string(),
+    }, { error: 'must be a cursor returned by a previous page' }));
 
-        return { from: from ?? end - DAY_IN_MILLISECONDS, to: end };
-    })
-    .refine(({ from, to }) => from <= to, { error: 'from must not be after to', path: ['from'] })
-    .refine(({ from, to }) => to - from <= MAX_RANGE_IN_DAYS * DAY_IN_MILLISECONDS, {
-        error: `range must not exceed ${MAX_RANGE_IN_DAYS} days`,
-        path: ['from'],
-    });
+export const listEventsSchema = rangeSchema
+    .and(z.object({
+        order: orderSchema,
+        limit: limitSchema,
+        types: z.string().optional().transform((value) => value?.split(',') ?? []),
+        cursor: cursorSchema.optional(),
+    }))
+    .transform(({ cursor, ...query }) => cursor ?? query);

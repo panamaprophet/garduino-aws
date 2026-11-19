@@ -15,6 +15,7 @@ type Key = Record<string, unknown>;
 interface QueryOptions {
     attributes: Record<string, unknown>;
     index?: string;
+    filter?: string;
     projection?: string[];
     limit?: number;
     scanForward?: boolean;
@@ -95,6 +96,7 @@ export const query = async <T>(table: string | undefined, expression: string, op
         ExpressionAttributeNames: names,
         ExpressionAttributeValues: values,
         IndexName: options.index,
+        FilterExpression: options.filter,
         ProjectionExpression: options.projection?.join(', '),
         Limit: options.limit,
         ScanIndexForward: options.scanForward,

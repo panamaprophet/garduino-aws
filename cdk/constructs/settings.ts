@@ -48,6 +48,7 @@ export class Settings extends Construct {
         api.addRoute(routes.updateSettings, updateSettings);
 
         mqtt.addTopicRule({
+            id: 'settings-request',
             topic: topics.request,
             handler: requestSettings,
             select: 'topic(2) AS controllerId',
