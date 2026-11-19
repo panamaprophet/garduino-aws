@@ -4,22 +4,20 @@ import { OAuthScope, UserPool, UserPoolClientIdentityProvider } from 'aws-cdk-li
 
 const MCP_CALLBACK_URL = 'http://localhost:8765/callback';
 
+interface AuthProps {
+    userPoolId: string;
+    webClientId: string;
+}
+
 export class Auth extends Construct {
     readonly userPoolId: string;
     readonly webClientId: string;
     readonly mcpClientId: string;
 
-    constructor(scope: Construct, id: string) {
+    constructor(scope: Construct, id: string, { userPoolId, webClientId }: AuthProps) {
         super(scope, id);
 
         const { stackName } = Stack.of(this);
-
-        const userPoolId = process.env.USER_POOL_ID;
-        const webClientId = process.env.USER_POOL_CLIENT_ID;
-
-        if (!userPoolId || !webClientId) {
-            throw new Error('Missing user pool configuration in environment variables');
-        }
 
         const userPool = UserPool.fromUserPoolId(this, 'user-pool', userPoolId);
 

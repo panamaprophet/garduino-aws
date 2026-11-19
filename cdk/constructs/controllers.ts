@@ -1,57 +1,64 @@
 import { Construct } from 'constructs';
-import { ArnFormat, Duration, Stack } from 'aws-cdk-lib';
+import { Duration, Stack } from 'aws-cdk-lib';
 import { AttributeType } from 'aws-cdk-lib/aws-dynamodb';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { CfnPolicy } from 'aws-cdk-lib/aws-iot';
 import { Auth } from './auth';
-import { getFirmwareBaseUrl } from '../lib/firmware';
-import { createFunction } from '../lib/function';
-import { iotProvisioningPolicy } from '../lib/policies';
-import { ServiceProps } from '../lib/service';
-import { createTable } from '../lib/table';
+import { createFunction, createTable, FunctionProps, iotArn, ServiceProps } from '../lib';
 import { routes, topics } from '@/services/controllers/controllers.config';
 
 interface ControllersProps extends ServiceProps {
     auth: Auth;
+    firmwareBaseUrl: string;
 }
 
 const THING_NAME = '${iot:Connection.Thing.ThingName}';
 
 export class Controllers extends Construct {
-    constructor(scope: Construct, id: string, { api, auth }: ControllersProps) {
+    constructor(scope: Construct, id: string, { api, auth, firmwareBaseUrl }: ControllersProps) {
         super(scope, id);
 
-        const stack = Stack.of(this);
-
-        const iotArn = (resource: string, resourceName: string) => stack.formatArn({
-            service: 'iot',
-            resource,
-            resourceName,
-            arnFormat: ArnFormat.SLASH_RESOURCE_NAME,
-        });
+        const { stackName } = Stack.of(this);
 
         const devicePolicy = new CfnPolicy(this, 'device-policy', {
-            policyName: `${stack.stackName}-device`,
+            policyName: `${stackName}-device`,
             policyDocument: {
                 Version: '2012-10-17',
                 Statement: [
                     {
                         Effect: 'Allow',
                         Action: 'iot:Connect',
-                        Resource: iotArn('client', THING_NAME),
+                        Resource: iotArn(this, 'client', THING_NAME),
                     },
                     {
                         Effect: 'Allow',
                         Action: ['iot:Publish', 'iot:Receive'],
-                        Resource: iotArn('topic', topics.device(THING_NAME)),
+                        Resource: iotArn(this, 'topic', topics.device(THING_NAME)),
                     },
                     {
                         Effect: 'Allow',
                         Action: 'iot:Subscribe',
-                        Resource: iotArn('topicfilter', topics.device(THING_NAME)),
+                        Resource: iotArn(this, 'topicfilter', topics.device(THING_NAME)),
                     },
                 ],
             },
+        });
+
+        const provisioningPolicy = new PolicyStatement({
+            actions: [
+                'iot:CreateThing',
+                'iot:ListThingPrincipals',
+                'iot:AttachThingPrincipal',
+                'iot:CreateKeysAndCertificate',
+                'iot:UpdateCertificate',
+                'iot:AttachPolicy',
+            ],
+            resources: ['*'],
+        });
+
+        const commandsPolicy = new PolicyStatement({
+            actions: ['iot:Publish'],
+            resources: [iotArn(this, 'topic', topics.commands('*'))],
         });
 
         const table = createTable(this, 'controllers', {
@@ -69,16 +76,19 @@ export class Controllers extends Construct {
         });
 
         const environment = { CONTROLLERS_TABLE: table.tableName };
+
         const provisioning = {
             environment: { ...environment, DEVICE_POLICY_NAME: devicePolicy.ref },
-            initialPolicy: [iotProvisioningPolicy],
+            initialPolicy: [provisioningPolicy],
             memorySize: 256,
             timeout: Duration.seconds(10),
         };
 
-        const authorizeRequest = createFunction(this, {
-            service: 'controllers',
-            feature: 'authorize-request',
+        const createHandler = (feature: string, props?: FunctionProps) => {
+            return createFunction(this, { service: 'controllers', feature, environment, ...props });
+        };
+
+        const authorizeRequest = createHandler('authorize-request', {
             environment: {
                 ...environment,
                 USER_POOL_ID: auth.userPoolId,
@@ -91,22 +101,15 @@ export class Controllers extends Construct {
 
         api.useAuthorizer(authorizeRequest);
 
-        const listControllers = createFunction(this, { service: 'controllers', feature: 'list-controllers', environment });
-        const getController = createFunction(this, { service: 'controllers', feature: 'get-controller', environment });
-        const updateController = createFunction(this, { service: 'controllers', feature: 'update-controller', environment });
-        const createController = createFunction(this, { service: 'controllers', feature: 'create-controller', ...provisioning });
-        const removeController = createFunction(this, { service: 'controllers', feature: 'remove-controller', ...provisioning });
-        const rotateCertificate = createFunction(this, { service: 'controllers', feature: 'rotate-certificate', ...provisioning });
-        const sendCommand = createFunction(this, {
-            service: 'controllers',
-            feature: 'send-command',
-            environment: { FIRMWARE_BASE_URL: getFirmwareBaseUrl(this) },
-            initialPolicy: [
-                new PolicyStatement({
-                    actions: ['iot:Publish'],
-                    resources: [iotArn('topic', topics.commands('*'))],
-                }),
-            ],
+        const listControllers = createHandler('list-controllers');
+        const getController = createHandler('get-controller');
+        const updateController = createHandler('update-controller');
+        const createController = createHandler('create-controller', provisioning);
+        const removeController = createHandler('remove-controller', provisioning);
+        const rotateCertificate = createHandler('rotate-certificate', provisioning);
+        const sendCommand = createHandler('send-command', {
+            environment: { FIRMWARE_BASE_URL: firmwareBaseUrl },
+            initialPolicy: [commandsPolicy],
         });
 
         table.grantReadData(listControllers);

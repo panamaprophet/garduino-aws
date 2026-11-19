@@ -46,9 +46,9 @@ export class Api extends Construct {
 
     addRoute(routeKey: string, handler: IFunction) {
         const { stackName } = Stack.of(this);
-        const [method, path] = routeKey.split(' ');
+        const [method = '', path] = routeKey.split(' ');
 
-        if (!path || !Object.values<string>(HttpMethod).includes(method!)) {
+        if (!path || !Object.values<string>(HttpMethod).includes(method)) {
             throw new Error(`Invalid route key "${routeKey}", expected "<METHOD> <path>"`);
         }
 

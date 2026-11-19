@@ -2,17 +2,19 @@ import { Construct } from 'constructs';
 import { RemovalPolicy } from 'aws-cdk-lib';
 import { PolicyStatement, StarPrincipal } from 'aws-cdk-lib/aws-iam';
 import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3';
-import { getFirmwareBucketName } from '../lib/firmware';
-import { createFunction } from '../lib/function';
-import { ServiceProps } from '../lib/service';
+import { createFunction, ServiceProps } from '../lib';
 import { routes } from '@/services/firmware/firmware.config';
 
+interface FirmwareProps extends ServiceProps {
+    bucketName: string;
+}
+
 export class Firmware extends Construct {
-    constructor(scope: Construct, id: string, { api }: ServiceProps) {
+    constructor(scope: Construct, id: string, { api, bucketName }: FirmwareProps) {
         super(scope, id);
 
         const bucket = new Bucket(this, 'bucket', {
-            bucketName: getFirmwareBucketName(this),
+            bucketName,
             removalPolicy: RemovalPolicy.RETAIN,
             blockPublicAccess: new BlockPublicAccess({
                 blockPublicAcls: true,
@@ -22,14 +24,14 @@ export class Firmware extends Construct {
             }),
         });
 
-        bucket.addToResourcePolicy(
-            new PolicyStatement({
-                sid: 'PublicReadGetObject',
-                actions: ['s3:GetObject'],
-                resources: [bucket.arnForObjects('*')],
-                principals: [new StarPrincipal()],
-            }),
-        );
+        const publicReadPolicy = new PolicyStatement({
+            sid: 'PublicReadGetObject',
+            actions: ['s3:GetObject'],
+            resources: [bucket.arnForObjects('*')],
+            principals: [new StarPrincipal()],
+        });
+
+        bucket.addToResourcePolicy(publicReadPolicy);
 
         const listFirmware = createFunction(this, {
             service: 'firmware',

@@ -1,6 +1,5 @@
 import { ConditionalCheckFailedException, DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DeleteCommand, DynamoDBDocumentClient, GetCommand, PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { env } from '@/shared/env';
 
 type Item = Record<string, unknown>;
 
@@ -28,9 +27,7 @@ const toNames = (...expressions: Array<string | undefined>) => {
     return entries.length > 0 ? Object.fromEntries(entries) : undefined;
 };
 
-export const table = <T extends object>(envName: string) => {
-    const name = env(envName);
-
+export const table = <T extends object>(name: string) => {
     const get = async (key: Item) => {
         const { Item } = await client.send(new GetCommand({ TableName: name, Key: key }));
 

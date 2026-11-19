@@ -1,10 +1,7 @@
 import { Construct } from 'constructs';
-import { Stack } from 'aws-cdk-lib';
 import { AttributeType } from 'aws-cdk-lib/aws-dynamodb';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
-import { createFunction } from '../lib/function';
-import { ServiceProps } from '../lib/service';
-import { createTable } from '../lib/table';
+import { createFunction, createTable, FunctionProps, iotArn, ServiceProps } from '../lib';
 import { routes, topics } from '@/services/settings/settings.config';
 
 export class Settings extends Construct {
@@ -19,26 +16,18 @@ export class Settings extends Construct {
 
         const publishPolicy = new PolicyStatement({
             actions: ['iot:Publish'],
-            resources: [
-                Stack.of(this).formatArn({ service: 'iot', resource: 'topic', resourceName: topics.settings('*') }),
-            ],
+            resources: [iotArn(this, 'topic', topics.settings('*'))],
         });
 
         const environment = { SETTINGS_TABLE: table.tableName };
 
-        const getSettings = createFunction(this, { service: 'settings', feature: 'get-settings', environment });
-        const updateSettings = createFunction(this, {
-            service: 'settings',
-            feature: 'update-settings',
-            environment,
-            initialPolicy: [publishPolicy],
-        });
-        const requestSettings = createFunction(this, {
-            service: 'settings',
-            feature: 'request-settings',
-            environment,
-            initialPolicy: [publishPolicy],
-        });
+        const createHandler = (feature: string, props?: FunctionProps) => {
+            return createFunction(this, { service: 'settings', feature, environment, ...props });
+        };
+
+        const getSettings = createHandler('get-settings');
+        const updateSettings = createHandler('update-settings', { initialPolicy: [publishPolicy] });
+        const requestSettings = createHandler('request-settings', { initialPolicy: [publishPolicy] });
 
         table.grantReadData(getSettings);
         table.grantReadWriteData(updateSettings);

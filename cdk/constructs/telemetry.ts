@@ -1,9 +1,7 @@
 import { Construct } from 'constructs';
 import { Duration } from 'aws-cdk-lib';
 import { AttributeType } from 'aws-cdk-lib/aws-dynamodb';
-import { createFunction } from '../lib/function';
-import { ServiceProps } from '../lib/service';
-import { createTable } from '../lib/table';
+import { createFunction, createTable, FunctionProps, ServiceProps } from '../lib';
 import { routes, topics } from '@/services/telemetry/telemetry.config';
 
 export class Telemetry extends Construct {
@@ -27,10 +25,14 @@ export class Telemetry extends Construct {
         const environment = { EVENTS_TABLE: eventsTable.tableName, LATEST_TABLE: latestTable.tableName };
         const timeout = Duration.seconds(25);
 
-        const listEvents = createFunction(this, { service: 'telemetry', feature: 'list-events', environment, timeout });
-        const getSummary = createFunction(this, { service: 'telemetry', feature: 'get-summary', environment, timeout });
-        const getLatest = createFunction(this, { service: 'telemetry', feature: 'get-latest', environment });
-        const reportEvent = createFunction(this, { service: 'telemetry', feature: 'report-event', environment });
+        const createHandler = (feature: string, props?: FunctionProps) => {
+            return createFunction(this, { service: 'telemetry', feature, environment, ...props });
+        };
+
+        const listEvents = createHandler('list-events', { timeout });
+        const getSummary = createHandler('get-summary', { timeout });
+        const getLatest = createHandler('get-latest');
+        const reportEvent = createHandler('report-event');
 
         eventsTable.grantReadData(listEvents);
         eventsTable.grantReadData(getSummary);

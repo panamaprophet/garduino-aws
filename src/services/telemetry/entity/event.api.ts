@@ -1,4 +1,5 @@
 import { table } from '@/shared/db';
+import { env } from '@/shared/env';
 import { ControllerEvent, toEventId } from './event.model';
 import { Range } from './range.schema';
 
@@ -11,8 +12,11 @@ export interface EventQuery extends Range {
     lastKey?: string;
 }
 
-const eventsTable = table<ControllerEvent>('EVENTS_TABLE');
-const latestTable = table<ControllerEvent>('LATEST_TABLE');
+const eventsTableName = env('EVENTS_TABLE');
+const latestTableName = env('LATEST_TABLE');
+
+const eventsTable = table<ControllerEvent>(eventsTableName);
+const latestTable = table<ControllerEvent>(latestTableName);
 
 const toRangeValues = (controllerId: string, { from, to }: Range) => ({
     ':controllerId': controllerId,

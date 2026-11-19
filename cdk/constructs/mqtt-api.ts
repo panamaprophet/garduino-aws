@@ -3,7 +3,7 @@ import { CfnTopicRule } from 'aws-cdk-lib/aws-iot';
 import { Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { ILogGroup } from 'aws-cdk-lib/aws-logs';
-import { createLogGroup } from '../lib/log-group';
+import { createLogGroup } from '../lib';
 
 interface TopicRuleProps {
     id: string;

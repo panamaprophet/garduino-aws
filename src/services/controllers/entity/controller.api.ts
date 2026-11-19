@@ -1,8 +1,10 @@
 import { table } from '@/shared/db';
+import { env } from '@/shared/env';
 import { merge } from '@/shared/object';
 import { Controller } from './controller.model';
 
-const controllersTable = table<Controller>('CONTROLLERS_TABLE');
+const tableName = env('CONTROLLERS_TABLE');
+const controllersTable = table<Controller>(tableName);
 
 export const getController = (controllerId: string) => {
     return controllersTable.get({ controllerId });
