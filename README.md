@@ -101,18 +101,18 @@ Events are flexible — any JSON payload is accepted. The backend adds `id` (UUI
 Copy `.env.example` to `.env` and fill in the values:
 
 ```
-API_VERSION=v1
+API_VERSION=v2
+AUTH_DOMAIN_PREFIX=auth_domain_prefix
 
 AWS_REGION=eu-west-1
 AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
-
-USER_POOL_ID=user_pool_id
-USER_POOL_CLIENT_ID=user_pool_client_id
 ```
 
 - `API_VERSION` — used to namespace the entire deployment. The CDK stack is named `garduino-{API_VERSION}` (e.g., `garduino-v1`), and all resources (DynamoDB tables, S3 buckets, Lambda functions, API Gateway) include this version in their names. This allows running multiple independent versions of the stack side-by-side.
-- `USER_POOL_ID` / `USER_POOL_CLIENT_ID` — AWS Cognito user pool used for JWT authorization on the HTTP API.
+- `AUTH_DOMAIN_PREFIX` — prefix of the Cognito sign-in domain (`https://<prefix>.auth.<region>.amazoncognito.com`), used by the MCP client. Prefixes are global within a region.
+
+The stack owns the Cognito user pool. Self sign-up is disabled: users are created by an admin. The stack outputs `UserPoolId`, `WebClientId`, `McpClientId` and `AuthDomain` for the web app and the MCP server.
 
 ## Deployment
 
@@ -121,7 +121,6 @@ USER_POOL_CLIENT_ID=user_pool_client_id
 - Node.js
 - [pnpm](https://pnpm.io/) v10+
 - AWS credentials configured (via `.env` or AWS CLI)
-- AWS Cognito user pool
 
 ### Install dependencies
 
@@ -139,7 +138,7 @@ This runs `cdk deploy` which synthesizes and deploys the CloudFormation stack.
 
 ### CI/CD
 
-Pushes to `main` trigger a GitHub Actions workflow (`.github/workflows/deploy.yml`) that type-checks and deploys automatically. Required GitHub secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `USER_POOL_ID`, `USER_POOL_CLIENT_ID`. Required GitHub variables: `AWS_REGION`, `API_VERSION`.
+Pushes to `main` trigger a GitHub Actions workflow (`.github/workflows/deploy.yml`) that type-checks and deploys automatically. Required GitHub secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`. Required GitHub variables: `AWS_REGION`, `API_VERSION`, `AUTH_DOMAIN_PREFIX`.
 
 ### IoT Endpoint
 

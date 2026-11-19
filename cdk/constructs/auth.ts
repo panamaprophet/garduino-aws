@@ -1,12 +1,11 @@
 import { Construct } from 'constructs';
-import { CfnOutput, Duration, Stack } from 'aws-cdk-lib';
-import { OAuthScope, UserPool, UserPoolClientIdentityProvider } from 'aws-cdk-lib/aws-cognito';
+import { CfnOutput, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
+import { AccountRecovery, OAuthScope, UserPool, UserPoolClientIdentityProvider } from 'aws-cdk-lib/aws-cognito';
 
 const MCP_CALLBACK_URL = 'http://localhost:8765/callback';
 
 interface AuthProps {
-    userPoolId: string;
-    webClientId: string;
+    domainPrefix: string;
 }
 
 export class Auth extends Construct {
@@ -14,12 +13,37 @@ export class Auth extends Construct {
     readonly webClientId: string;
     readonly mcpClientId: string;
 
-    constructor(scope: Construct, id: string, { userPoolId, webClientId }: AuthProps) {
+    constructor(scope: Construct, id: string, { domainPrefix }: AuthProps) {
         super(scope, id);
 
         const { stackName } = Stack.of(this);
 
-        const userPool = UserPool.fromUserPoolId(this, 'user-pool', userPoolId);
+        const userPool = new UserPool(this, 'user-pool', {
+            userPoolName: `${stackName}-users`,
+            selfSignUpEnabled: false,
+            signInAliases: { email: true },
+            signInCaseSensitive: false,
+            autoVerify: { email: true },
+            accountRecovery: AccountRecovery.EMAIL_ONLY,
+            passwordPolicy: { minLength: 12 },
+            removalPolicy: RemovalPolicy.RETAIN,
+            deletionProtection: true,
+        });
+
+        const domain = userPool.addDomain('domain', {
+            cognitoDomain: { domainPrefix },
+        });
+
+        const webClient = userPool.addClient('web-client', {
+            userPoolClientName: `${stackName}-web`,
+            generateSecret: false,
+            authFlows: { userSrp: true },
+            disableOAuth: true,
+            preventUserExistenceErrors: true,
+            enableTokenRevocation: true,
+            accessTokenValidity: Duration.hours(1),
+            refreshTokenValidity: Duration.days(30),
+        });
 
         const mcpClient = userPool.addClient('mcp-client', {
             userPoolClientName: `${stackName}-mcp`,
@@ -36,10 +60,13 @@ export class Auth extends Construct {
             refreshTokenValidity: Duration.days(30),
         });
 
-        this.userPoolId = userPoolId;
-        this.webClientId = webClientId;
+        this.userPoolId = userPool.userPoolId;
+        this.webClientId = webClient.userPoolClientId;
         this.mcpClientId = mcpClient.userPoolClientId;
 
+        new CfnOutput(this, 'UserPoolId', { value: this.userPoolId });
+        new CfnOutput(this, 'WebClientId', { value: this.webClientId });
         new CfnOutput(this, 'McpClientId', { value: this.mcpClientId });
+        new CfnOutput(this, 'AuthDomain', { value: domain.baseUrl() });
     }
 }
