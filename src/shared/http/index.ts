@@ -7,7 +7,7 @@ export interface RequestContext {
 
 export type HttpEvent = APIGatewayProxyEventV2WithLambdaAuthorizer<Partial<RequestContext>>;
 
-export type HttpResult = APIGatewayProxyStructuredResultV2;
+type HttpResult = APIGatewayProxyStructuredResultV2;
 
 type HandlerFn<T> = (event: HttpEvent, context: RequestContext) => Promise<T> | T;
 
@@ -49,7 +49,7 @@ const toErrorResult = (error: unknown): [
     return [statusCode, result];
 };
 
-export const getUserId = (event: HttpEvent) => {
+const getUserId = (event: HttpEvent) => {
     const userId = event.requestContext.authorizer?.lambda?.userId;
 
     if (!userId) {

@@ -10,7 +10,7 @@ import {
     UpdateCertificateCommand,
 } from '@aws-sdk/client-iot';
 
-export const client = new IoTClient();
+const client = new IoTClient();
 
 const ROOT_CERTIFICATE_URL = 'https://www.amazontrust.com/repository/AmazonRootCA1.pem';
 

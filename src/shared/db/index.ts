@@ -16,7 +16,6 @@ interface QueryOptions {
     attributes: Record<string, unknown>;
     index?: string;
     filter?: string;
-    projection?: string[];
     limit?: number;
     scanForward?: boolean;
     startKey?: Key;
@@ -97,7 +96,6 @@ export const query = async <T>(table: string | undefined, expression: string, op
         ExpressionAttributeValues: values,
         IndexName: options.index,
         FilterExpression: options.filter,
-        ProjectionExpression: options.projection?.join(', '),
         Limit: options.limit,
         ScanIndexForward: options.scanForward,
         ExclusiveStartKey: options.startKey ? marshall(options.startKey) : undefined,

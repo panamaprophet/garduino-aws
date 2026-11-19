@@ -1,6 +1,6 @@
 import { ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3';
 
-export const s3Client = new S3Client({});
+const client = new S3Client({});
 
 export const listObjects = async (bucket: string, prefix?: string) => {
     const result: Array<{
@@ -13,7 +13,7 @@ export const listObjects = async (bucket: string, prefix?: string) => {
     let continuationToken: string | undefined;
 
     do {
-        const response = await s3Client.send(new ListObjectsV2Command({
+        const response = await client.send(new ListObjectsV2Command({
             Bucket: bucket,
             Prefix: prefix,
             ContinuationToken: continuationToken,
