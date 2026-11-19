@@ -1,18 +1,14 @@
 import { table } from '@/shared/db';
 import { merge } from '@/shared/object';
-import { Controller, markControllerDeleted } from './controller.model';
+import { Controller } from './controller.model';
 
 const controllersTable = table<Controller>('CONTROLLERS_TABLE');
-
-const replaceActiveController = (controller: Controller) => {
-    return controllersTable.put(controller, { condition: 'attribute_exists(#ownerId)' });
-};
 
 export const getController = (controllerId: string) => {
     return controllersTable.get({ controllerId });
 };
 
-export const listControllersByOwner = (ownerId: string) => {
+export const listControllers = (ownerId: string) => {
     return controllersTable.queryAll('#ownerId = :ownerId', { ':ownerId': ownerId }, { index: 'ownerId_Index' });
 };
 
@@ -32,17 +28,9 @@ export const updateController = async (controllerId: string, changes: Partial<Co
     const updatedAt = new Date().toISOString();
     const updated = merge(controller, { ...changes, updatedAt });
 
-    return replaceActiveController(updated);
+    return controllersTable.put(updated, { condition: 'attribute_exists(#controllerId)' });
 };
 
-export const removeController = async (controllerId: string) => {
-    const controller = await getController(controllerId);
-
-    if (!controller) {
-        return null;
-    }
-
-    const deleted = markControllerDeleted(controller);
-
-    return replaceActiveController(deleted);
+export const removeController = (controllerId: string) => {
+    return controllersTable.remove({ controllerId });
 };

@@ -14,9 +14,4 @@ export const defaultSettings: Settings = {
     sensor: sensorDefaults,
 };
 
-export const toDeviceSettings = (settings: Settings) => ({
-    v: 2,
-    light: settings.light,
-    fan: settings.fan,
-    sensor: settings.sensor,
-});
+export const toDeviceSettings = (settings: Settings) => ({ v: 2, ...settings });

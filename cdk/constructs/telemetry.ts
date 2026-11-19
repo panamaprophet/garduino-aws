@@ -47,6 +47,7 @@ export class Telemetry extends Construct {
             topic: topics.telemetry,
             handler: reportEvent,
             select: 'topic(2) AS controllerId, timestamp() AS receivedAt, * AS payload',
+            where: "type <> 'connection'",
         });
 
         mqtt.addTopicRule({

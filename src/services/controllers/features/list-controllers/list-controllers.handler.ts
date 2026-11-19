@@ -1,9 +1,9 @@
 import { defineHandler } from '@/shared/http';
 import { toControllerResponse } from '../../entity/controller.model';
-import { listControllersByOwner } from '../../entity/controller.api';
+import { listControllers } from '../../entity/controller.api';
 
 export const handler = defineHandler({}, async ({ userId }) => {
-    const controllers = await listControllersByOwner(userId);
+    const controllers = await listControllers(userId);
 
     const data = controllers.map(toControllerResponse);
 

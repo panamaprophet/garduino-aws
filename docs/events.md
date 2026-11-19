@@ -62,7 +62,7 @@ The device does not report its connection. AWS IoT publishes lifecycle events on
 { "type": "connection", "online": false, "reason": "MQTT_KEEP_ALIVE_TIMEOUT" }
 ```
 
-`reason` is AWS IoT's `disconnectReason` and is present only on disconnect. An abrupt drop (power or Wi-Fi loss) is detected once the MQTT keepalive times out.
+`reason` is AWS IoT's `disconnectReason` and is present only on disconnect. An abrupt drop (power or Wi-Fi loss) is detected once the MQTT keepalive times out. The telemetry topic rule drops any `connection` event a device publishes itself, so a device cannot fake its status.
 
 ## Messages to the device
 

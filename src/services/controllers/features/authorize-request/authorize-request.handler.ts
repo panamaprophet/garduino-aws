@@ -2,7 +2,6 @@ import { APIGatewayRequestAuthorizerEventV2, APIGatewaySimpleAuthorizerWithConte
 import { CognitoJwtVerifier } from 'aws-jwt-verify';
 import { env } from '@/shared/env';
 import { RequestContext } from '@/shared/http';
-import { isOwnedBy } from '../../entity/controller.model';
 import { getController } from '../../entity/controller.api';
 
 type AuthorizerResult = APIGatewaySimpleAuthorizerWithContextResult<
@@ -75,7 +74,7 @@ export const handler = async (event: APIGatewayRequestAuthorizerEventV2): Promis
         return deny(`controller ${controllerId} not found`);
     }
 
-    if (!isOwnedBy(controller, token.sub)) {
+    if (controller.ownerId !== token.sub) {
         return deny(`controller ${controllerId} is not owned by ${token.sub}`);
     }
 

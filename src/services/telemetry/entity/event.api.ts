@@ -2,8 +2,6 @@ import { table } from '@/shared/db';
 import { ControllerEvent, toEventId } from './event.model';
 import { Range } from './range.schema';
 
-const MAX_PAGES = 5;
-
 const RANGE_CONDITION = '#controllerId = :controllerId AND #id BETWEEN :from AND :to';
 
 export interface EventQuery extends Range {
@@ -59,23 +57,11 @@ export const listEvents = (controllerId: string, range: Range) => {
 export const listEventsPage = async (controllerId: string, { order, limit, types, lastKey, ...range }: EventQuery) => {
     const typeFilter = toTypeFilter(types);
     const values = { ...toRangeValues(controllerId, range), ...typeFilter.values };
-    const items: ControllerEvent[] = [];
+    const startKey = lastKey ? { controllerId, id: lastKey } : undefined;
 
-    let startKey: Record<string, unknown> | undefined = lastKey ? { controllerId, id: lastKey } : undefined;
-    let pages = 0;
+    const page = await eventsTable.query(RANGE_CONDITION, values, { filter: typeFilter.filter, limit, order, startKey });
 
-    do {
-        const page = await eventsTable.query(RANGE_CONDITION, values, {
-            filter: typeFilter.filter,
-            limit: limit - items.length,
-            order,
-            startKey,
-        });
+    const nextKey = page.lastKey ? String(page.lastKey.id) : undefined;
 
-        items.push(...page.items);
-        startKey = page.lastKey;
-        pages += 1;
-    } while (startKey && items.length < limit && pages < MAX_PAGES);
-
-    return { items, lastKey: startKey ? String(startKey.id) : undefined };
+    return { items: page.items, lastKey: nextKey };
 };

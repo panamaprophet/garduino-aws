@@ -32,7 +32,10 @@ const toBucket = (start: number, size: number, events: ControllerEvent[]) => {
         .flatMap((event) => toMetrics(event.data));
 
     for (const [name, value] of metrics) {
-        values[name] = [...(values[name] ?? []), value];
+        const list = values[name] ?? [];
+
+        list.push(value);
+        values[name] = list;
     }
 
     const readings = Object.fromEntries(Object.entries(values).map(([name, list]) => [name, toStats(list)]));
@@ -50,7 +53,8 @@ export const summarize = (events: ControllerEvent[], { from, to, interval }: Sum
         const start = toBucketStart(event.ts);
         const group = groups.get(start) ?? [];
 
-        groups.set(start, [...group, event]);
+        group.push(event);
+        groups.set(start, group);
     }
 
     for (let start = toBucketStart(from); start <= to; start += size) {

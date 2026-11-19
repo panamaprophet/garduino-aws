@@ -1,3 +1,5 @@
 import { z } from 'zod';
 
-export const controllerNameSchema = z.string().trim().min(1).max(64);
+export const controllerSchema = z.strictObject({
+    name: z.string().trim().min(1).max(64),
+});
