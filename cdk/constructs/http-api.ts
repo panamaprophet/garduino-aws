@@ -1,5 +1,5 @@
 import { Construct } from 'constructs';
-import { CfnOutput, Duration, Stack } from 'aws-cdk-lib';
+import { Duration, Stack } from 'aws-cdk-lib';
 import { Cors } from 'aws-cdk-lib/aws-apigateway';
 import { IFunction } from 'aws-cdk-lib/aws-lambda';
 import { HttpLambdaAuthorizer, HttpLambdaResponseType } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
@@ -32,8 +32,6 @@ export class Api extends Construct {
             ThrottlingRateLimit: 5,
             ThrottlingBurstLimit: 10,
         });
-
-        new CfnOutput(this, 'ApiUrl', { value: this.api.apiEndpoint });
     }
 
     useAuthorizer(handler: IFunction) {

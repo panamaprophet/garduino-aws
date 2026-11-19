@@ -1,5 +1,5 @@
 import { Construct } from 'constructs';
-import { Stack, StackProps } from 'aws-cdk-lib';
+import { CfnOutput, Stack, StackProps } from 'aws-cdk-lib';
 import { Api } from './constructs/http-api';
 import { Mqtt } from './constructs/mqtt-api';
 import { Auth } from './constructs/auth';
@@ -27,5 +27,12 @@ export class Garduino extends Stack {
         new Settings(this, 'settings', { api, mqtt });
         new Telemetry(this, 'telemetry', { api, mqtt });
         new Firmware(this, 'firmware', { api, mqtt, bucketName: firmwareBucketName });
+
+        new CfnOutput(this, 'ApiUrl', { value: api.api.apiEndpoint });
+        new CfnOutput(this, 'UserPoolId', { value: auth.userPoolId });
+        new CfnOutput(this, 'WebClientId', { value: auth.webClientId });
+        new CfnOutput(this, 'McpClientId', { value: auth.mcpClientId });
+        new CfnOutput(this, 'AuthDomain', { value: auth.domainUrl });
+        new CfnOutput(this, 'FirmwareBucket', { value: firmwareBucketName });
     }
 }

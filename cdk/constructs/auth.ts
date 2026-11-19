@@ -1,5 +1,5 @@
 import { Construct } from 'constructs';
-import { CfnOutput, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
+import { Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { AccountRecovery, OAuthScope, UserPool, UserPoolClientIdentityProvider } from 'aws-cdk-lib/aws-cognito';
 
 const MCP_CALLBACK_URL = 'http://localhost:8765/callback';
@@ -12,6 +12,7 @@ export class Auth extends Construct {
     readonly userPoolId: string;
     readonly webClientId: string;
     readonly mcpClientId: string;
+    readonly domainUrl: string;
 
     constructor(scope: Construct, id: string, { domainPrefix }: AuthProps) {
         super(scope, id);
@@ -63,10 +64,6 @@ export class Auth extends Construct {
         this.userPoolId = userPool.userPoolId;
         this.webClientId = webClient.userPoolClientId;
         this.mcpClientId = mcpClient.userPoolClientId;
-
-        new CfnOutput(this, 'UserPoolId', { value: this.userPoolId });
-        new CfnOutput(this, 'WebClientId', { value: this.webClientId });
-        new CfnOutput(this, 'McpClientId', { value: this.mcpClientId });
-        new CfnOutput(this, 'AuthDomain', { value: domain.baseUrl() });
+        this.domainUrl = domain.baseUrl();
     }
 }
