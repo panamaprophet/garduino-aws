@@ -5,28 +5,30 @@
   "main": "index.js",
   "license": "MIT",
   "devDependencies": {
-    "@aws-sdk/client-apigatewaymanagementapi": "^3.1033.0",
-    "@aws-sdk/client-dynamodb": "^3.1033.0",
-    "@aws-sdk/client-iot": "^3.1033.0",
-    "@aws-sdk/client-iot-data-plane": "^3.1033.0",
-    "@aws-sdk/client-s3": "^3.1033.0",
-    "@aws-sdk/s3-request-presigner": "^3.1033.0",
-    "@aws-sdk/util-dynamodb": "^3.996.2",
-    "@jest/globals": "^30.3.0",
+    "@biomejs/biome": "2.6.8",
     "@types/aws-lambda": "^8.10.161",
     "@types/node": "^25.6.0",
     "aws-cdk": "^2.1118.4",
     "aws-cdk-lib": "^2.250.0",
     "constructs": "^10.6.0",
-    "date-fns": "^4.1.0",
     "esbuild": "^0.28.0",
-    "jest": "^30.3.0",
-    "ts-jest": "^29.4.9",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1172.0",
+    "@aws-sdk/client-iot": "^3.1033.0",
+    "@aws-sdk/client-iot-data-plane": "^3.1033.0",
+    "@aws-sdk/client-s3": "^3.1033.0",
+    "@aws-sdk/lib-dynamodb": "^3.1172.0",
+    "aws-jwt-verify": "^5.2.1",
+    "zod": "^4.6.7"
+  },
   "scripts": {
-    "deploy": "cdk deploy"
+    "deploy": "cdk deploy",
+    "check": "biome check",
+    "format": "biome check --write",
+    "typecheck": "tsc --noEmit"
   },
   "packageManager": "pnpm@10.0.0"
 }

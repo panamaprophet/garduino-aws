@@ -1,54 +1,34 @@
-import { Construct } from 'constructs';
-import { Stack, StackProps } from 'aws-cdk-lib';
-import { HttpMethod } from 'aws-cdk-lib/aws-events';
-
-import { Configuration } from './constructs/configuration';
-import { DataCollector } from './constructs/data-collector';
+import { CfnOutput, Stack, type StackProps } from 'aws-cdk-lib';
+import type { Construct } from 'constructs';
+import { Auth } from './constructs/auth';
+import { Controllers } from './constructs/controllers';
 import { Firmware } from './constructs/firmware';
 import { Api } from './constructs/http-api';
 import { Mqtt } from './constructs/mqtt-api';
+import { Settings } from './constructs/settings';
+import { Telemetry } from './constructs/telemetry';
 
 export class Garduino extends Stack {
-    mqtt: Mqtt;
-    api: Api;
-
-    configuration: Configuration;
-    dataCollector: DataCollector;
-    firmware: Firmware;
-
-    constructor(scope: Construct, id: string, props?: StackProps) {
+    constructor(scope: Construct, id: string, props: StackProps) {
         super(scope, id, props);
 
-        this.configuration = new Configuration(this, 'configuration');
-        this.dataCollector = new DataCollector(this, 'data-collector');
-        this.firmware = new Firmware(this, 'firmware');
+        const firmwareBucketName = `${this.stackName}-firmware`;
+        const firmwareBaseUrl = `https://${firmwareBucketName}.s3.${this.region}.amazonaws.com`;
 
-        this.api = new Api(this, 'http-api');
-        this.mqtt = new Mqtt(this, 'mqtt-api');
+        const auth = new Auth(this, 'auth');
+        const api = new Api(this, 'http-api');
+        const mqtt = new Mqtt(this, 'mqtt-api');
 
-        this.api.addRoute('/v1/controllers', this.configuration.list);
-        this.api.addRoute('/v1/controllers', this.configuration.create, { method: HttpMethod.POST });
+        new Controllers(this, 'controllers', { api, mqtt, auth, firmwareBaseUrl });
+        new Settings(this, 'settings', { api, mqtt });
+        new Telemetry(this, 'telemetry', { api, mqtt });
+        new Firmware(this, 'firmware', { api, mqtt, bucketName: firmwareBucketName });
 
-        this.api.addRoute('/v1/controllers/{controllerId}', this.configuration.update, { method: HttpMethod.PUT });
-        this.api.addRoute('/v1/controllers/{controllerId}', this.configuration.remove, { method: HttpMethod.DELETE });
-        this.api.addRoute('/v1/controllers/{controllerId}', this.configuration.get);
-
-        this.api.addRoute('/v1/controllers/{controllerId}/data', this.dataCollector.push, { method: HttpMethod.PUT });
-        this.api.addRoute('/v1/controllers/{controllerId}/data', this.dataCollector.query);
-
-        this.api.addRoute('/v1/firmware', this.firmware.list);
-        this.api.addRoute('/v1/firmware/download', this.firmware.getDownloadUrl);
-
-        this.mqtt.addTopicRule({
-            topic: 'controllers/+/config/pub',
-            handler: this.configuration.mqttTopicHandler,
-            select: 'topic(2) as controllerId',
-        });
-
-        this.mqtt.addTopicRule({
-            topic: 'controllers/+/events/pub',
-            handler: this.dataCollector.mqttTopicHandler,
-            select: 'topic(2) as controllerId, * as payload',
-        });
+        new CfnOutput(this, 'ApiUrl', { value: api.url });
+        new CfnOutput(this, 'UserPoolId', { value: auth.userPoolId });
+        new CfnOutput(this, 'WebClientId', { value: auth.webClientId });
+        new CfnOutput(this, 'McpClientId', { value: auth.mcpClientId });
+        new CfnOutput(this, 'AuthDomain', { value: auth.domainUrl });
+        new CfnOutput(this, 'FirmwareBucket', { value: firmwareBucketName });
     }
 }

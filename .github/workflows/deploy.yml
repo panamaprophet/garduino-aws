@@ -4,10 +4,11 @@ on:
   push:
     branches:
       - main
+  pull_request:
 
 jobs:
-  typecheck:
-    name: Type-check
+  check:
+    name: Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -22,15 +23,26 @@ jobs:
           node-version: latest
           cache: pnpm
 
-      - run: pnpm install
+      - name: Install dependencies
+        run: pnpm install
 
-      - run: pnpm exec tsc --noEmit
+      - name: Lint and format
+        run: pnpm exec biome ci
+
+      - name: Type-check
+        run: pnpm exec tsc --noEmit
+
+      - name: Synthesize
+        run: pnpm exec cdk synth --quiet
+        env:
+          API_VERSION: v2
 
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
-    needs: typecheck
-    environment: v1
+    needs: check
+    if: github.event_name == 'push'
+    environment: v2
     steps:
       - uses: actions/checkout@v6
 
@@ -57,6 +69,4 @@ jobs:
       - name: Deploy
         run: pnpm exec cdk deploy --require-approval never
         env:
-          USER_POOL_ID: ${{ secrets.USER_POOL_ID }}
-          USER_POOL_CLIENT_ID: ${{ secrets.USER_POOL_CLIENT_ID }}
           API_VERSION: ${{ vars.API_VERSION }}

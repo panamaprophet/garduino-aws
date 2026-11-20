@@ -1,22 +1,17 @@
 #!/usr/bin/env tsx
 
-import { App, StackProps } from 'aws-cdk-lib';
+import { App } from 'aws-cdk-lib';
+import { env } from '@/shared/env';
 import { Garduino } from './stack';
 
-const apiVersion = process.env.API_VERSION;
+const apiVersion = env('API_VERSION');
 
-if (!apiVersion) {
-  throw new Error('API_VERSION environment variable is not set');
-}
+const app = new App();
 
-const props: StackProps = {
+new Garduino(app, 'garduino', {
     env: {
         account: process.env.CDK_DEFAULT_ACCOUNT,
         region: process.env.CDK_DEFAULT_REGION,
     },
     stackName: `garduino-${apiVersion}`,
-};
-
-const app = new App();
-
-new Garduino(app, 'garduino', props);
+});

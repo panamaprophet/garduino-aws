@@ -1,31 +1,24 @@
-import { Construct } from 'constructs';
 import { Duration, Stack } from 'aws-cdk-lib';
 import { Cors } from 'aws-cdk-lib/aws-apigateway';
-import { IFunction } from 'aws-cdk-lib/aws-lambda';
-import { HttpJwtAuthorizer } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
+import { type CfnStage, CorsHttpMethod, HttpApi, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
+import { HttpLambdaAuthorizer, HttpLambdaResponseType } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
-import { HttpApi, CorsHttpMethod, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
+import type { IFunction } from 'aws-cdk-lib/aws-lambda';
+import { Construct } from 'constructs';
 
 export class Api extends Construct {
-    api: HttpApi;
+    readonly url: string;
+
+    private readonly api: HttpApi;
+
+    private authorizer?: HttpLambdaAuthorizer;
 
     constructor(scope: Construct, id: string) {
         super(scope, id);
 
-        const { stackName, region } = Stack.of(this);
+        const { stackName } = Stack.of(this);
 
-        const userPoolId = process.env.USER_POOL_ID;
-        const userPoolClientId = process.env.USER_POOL_CLIENT_ID;
-
-        if (!userPoolId || !userPoolClientId) {
-            throw new Error('Missing user pool configuration in environment variables');
-        }
-
-        const issuerUrl = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`;
-
-        const authorizer = new HttpJwtAuthorizer('authorizer', issuerUrl, { jwtAudience: [userPoolClientId] });
-
-        this.api = new HttpApi(this, `httpApi`, {
+        this.api = new HttpApi(this, 'httpApi', {
             apiName: `${stackName}-api`,
             corsPreflight: {
                 allowOrigins: Cors.ALL_ORIGINS,
@@ -33,18 +26,42 @@ export class Api extends Construct {
                 allowMethods: [CorsHttpMethod.ANY],
                 maxAge: Duration.seconds(500),
             },
-            defaultAuthorizer: authorizer,
+        });
+
+        const defaultStage = this.api.defaultStage?.node.defaultChild as CfnStage | undefined;
+
+        defaultStage?.addPropertyOverride('DefaultRouteSettings', {
+            ThrottlingRateLimit: 5,
+            ThrottlingBurstLimit: 10,
+        });
+
+        this.url = this.api.apiEndpoint;
+    }
+
+    useAuthorizer(handler: IFunction) {
+        this.authorizer = new HttpLambdaAuthorizer('authorizer', handler, {
+            responseTypes: [HttpLambdaResponseType.SIMPLE],
+            identitySource: ['$request.header.Authorization'],
+            resultsCacheTtl: Duration.seconds(0),
         });
     }
 
-    addRoute(path: string, handler: IFunction, options: { method: HttpMethod } = { method: HttpMethod.GET }) {
-        const { stackName } = Stack.of(this);
-        const name = path.replace(/\W/g, '');
+    addRoute(routeKey: string, handler: IFunction) {
+        const [method = '', path] = routeKey.split(' ');
+
+        if (!path || !Object.values<string>(HttpMethod).includes(method)) {
+            throw new Error(`Invalid route key "${routeKey}", expected "<METHOD> <path>"`);
+        }
+
+        if (!this.authorizer) {
+            throw new Error(`Route "${routeKey}" is registered before the API authorizer`);
+        }
 
         this.api.addRoutes({
             path,
-            methods: [options.method],
-            integration: new HttpLambdaIntegration(`${stackName}-api-${name}`, handler),
+            methods: [method as HttpMethod],
+            integration: new HttpLambdaIntegration(routeKey.replace(/\W/g, ''), handler),
+            authorizer: this.authorizer,
         });
     }
 }
