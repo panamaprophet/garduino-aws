@@ -31,7 +31,7 @@ export const listEventsSchema = rangeSchema
             types: z
                 .string()
                 .optional()
-                .transform((value) => value?.split(',') ?? []),
+                .transform((value = '') => value.split(',').filter(Boolean)),
             cursor: cursorSchema.optional(),
         }),
     )
