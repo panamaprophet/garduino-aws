@@ -7,7 +7,9 @@ import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations
 import { HttpApi, CorsHttpMethod, HttpMethod, CfnStage } from 'aws-cdk-lib/aws-apigatewayv2';
 
 export class Api extends Construct {
-    api: HttpApi;
+    readonly url: string;
+
+    private readonly api: HttpApi;
 
     private authorizer?: HttpLambdaAuthorizer;
 
@@ -16,7 +18,7 @@ export class Api extends Construct {
 
         const { stackName } = Stack.of(this);
 
-        this.api = new HttpApi(this, `httpApi`, {
+        this.api = new HttpApi(this, 'httpApi', {
             apiName: `${stackName}-api`,
             corsPreflight: {
                 allowOrigins: Cors.ALL_ORIGINS,
@@ -32,6 +34,8 @@ export class Api extends Construct {
             ThrottlingRateLimit: 5,
             ThrottlingBurstLimit: 10,
         });
+
+        this.url = this.api.apiEndpoint;
     }
 
     useAuthorizer(handler: IFunction) {
@@ -43,7 +47,6 @@ export class Api extends Construct {
     }
 
     addRoute(routeKey: string, handler: IFunction) {
-        const { stackName } = Stack.of(this);
         const [method = '', path] = routeKey.split(' ');
 
         if (!path || !Object.values<string>(HttpMethod).includes(method)) {
@@ -57,7 +60,7 @@ export class Api extends Construct {
         this.api.addRoutes({
             path,
             methods: [method as HttpMethod],
-            integration: new HttpLambdaIntegration(`${stackName}-api-${routeKey.replace(/\W/g, '')}`, handler),
+            integration: new HttpLambdaIntegration(routeKey.replace(/\W/g, ''), handler),
             authorizer: this.authorizer,
         });
     }

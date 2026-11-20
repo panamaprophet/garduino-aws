@@ -24,7 +24,7 @@ export class Garduino extends Stack {
         new Telemetry(this, 'telemetry', { api, mqtt });
         new Firmware(this, 'firmware', { api, mqtt, bucketName: firmwareBucketName });
 
-        new CfnOutput(this, 'ApiUrl', { value: api.api.apiEndpoint });
+        new CfnOutput(this, 'ApiUrl', { value: api.url });
         new CfnOutput(this, 'UserPoolId', { value: auth.userPoolId });
         new CfnOutput(this, 'WebClientId', { value: auth.webClientId });
         new CfnOutput(this, 'McpClientId', { value: auth.mcpClientId });

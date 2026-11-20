@@ -1,5 +1,6 @@
 import { controllerParams, defineHandler } from '@/shared/http';
 import { listEvents } from '../../entity/event.api';
+import { toRangeResponse } from '../../entity/range.schema';
 import { getSummarySchema } from './get-summary.schema';
 import { summarize } from './get-summary.model';
 
@@ -7,9 +8,8 @@ export const handler = defineHandler({ params: controllerParams, query: getSumma
     const events = await listEvents(controllerId, query);
 
     const data = summarize(events, query);
-    const meta = {
-        query: { from: new Date(query.from).toISOString(), to: new Date(query.to).toISOString(), interval: query.interval },
-    };
+    const range = toRangeResponse(query);
+    const meta = { query: { ...range, interval: query.interval } };
 
     return { data, meta };
 });

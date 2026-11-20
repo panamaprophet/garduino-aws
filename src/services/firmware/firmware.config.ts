@@ -1,3 +1,3 @@
 export const routes = {
-    'listFirmware': 'GET /v2/firmware',
+    listFirmware: 'GET /v2/firmware',
 };

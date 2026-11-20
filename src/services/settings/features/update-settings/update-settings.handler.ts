@@ -14,5 +14,7 @@ export const handler = defineHandler({ params: controllerParams, body: updateSet
 
     await publish(topics.settings(controllerId), payload);
 
-    return { data: settings };
+    const data = settings;
+
+    return { data };
 });

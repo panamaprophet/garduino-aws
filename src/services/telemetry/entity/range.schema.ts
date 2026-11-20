@@ -25,3 +25,8 @@ export const rangeSchema = z
     });
 
 export type Range = z.output<typeof rangeSchema>;
+
+export const toRangeResponse = ({ from, to }: Range) => ({
+    from: new Date(from).toISOString(),
+    to: new Date(to).toISOString(),
+});

@@ -52,11 +52,13 @@ export class Telemetry extends Construct {
             where: "type <> 'connection'",
         });
 
+        const connectionPayload = "{ 'type': 'connection', 'online': eventType = 'connected', 'reason': disconnectReason }";
+
         mqtt.addTopicRule({
             id: 'connection',
             topic: topics.connection,
             handler: reportEvent,
-            select: "clientId AS controllerId, timestamp AS receivedAt, { 'type': 'connection', 'online': eventType = 'connected', 'reason': disconnectReason } AS payload",
+            select: `clientId AS controllerId, timestamp AS receivedAt, ${connectionPayload} AS payload`,
         });
     }
 }

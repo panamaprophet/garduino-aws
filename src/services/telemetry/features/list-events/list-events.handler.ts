@@ -1,6 +1,7 @@
 import { controllerParams, defineHandler, toCursor } from '@/shared/http';
 import { toEventResponse } from '../../entity/event.model';
 import { listEventsPage } from '../../entity/event.api';
+import { toRangeResponse } from '../../entity/range.schema';
 import { listEventsSchema } from './list-events.schema';
 
 export const handler = defineHandler({ params: controllerParams, query: listEventsSchema }, async ({ params: { controllerId }, query }) => {
@@ -8,10 +9,8 @@ export const handler = defineHandler({ params: controllerParams, query: listEven
 
     const data = items.map(toEventResponse);
     const nextCursor = lastKey ? toCursor({ ...query, lastKey }) : null;
-    const meta = {
-        pagination: { nextCursor, limit: query.limit },
-        query: { from: new Date(query.from).toISOString(), to: new Date(query.to).toISOString() },
-    };
+    const pagination = { nextCursor, limit: query.limit };
+    const meta = { pagination, query: toRangeResponse(query) };
 
     return { data, meta };
 });

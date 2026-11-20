@@ -13,14 +13,14 @@ interface RequestSchema {
 
 type Output<T> = T extends z.ZodType ? z.output<T> : undefined;
 
-interface Request<S extends RequestSchema> {
+interface HttpRequest<S extends RequestSchema> {
     userId: string;
     params: Output<S['params']>;
     query: Output<S['query']>;
     body: Output<S['body']>;
 }
 
-interface Response<T> {
+interface HttpResponse<T> {
     data: T;
     meta?: Record<string, unknown>;
     status?: number;
@@ -96,7 +96,7 @@ const toBody = (event: HttpEvent): unknown => {
     }
 };
 
-const toRequest = <S extends RequestSchema>(schemas: S, event: HttpEvent): Request<S> => {
+const toRequest = <S extends RequestSchema>(schemas: S, event: HttpEvent): HttpRequest<S> => {
     const userId = event.requestContext.authorizer?.lambda?.userId;
 
     if (!userId) {
@@ -124,7 +124,7 @@ const toErrorResult = (error: unknown) => {
 
 export const defineHandler = <S extends RequestSchema, T>(
     schemas: S,
-    handler: (request: Request<S>) => Promise<Response<T>>,
+    handler: (request: HttpRequest<S>) => Promise<HttpResponse<T>>,
 ) => async (event: HttpEvent): Promise<HttpResult> => {
     try {
         const request = toRequest(schemas, event);

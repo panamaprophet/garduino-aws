@@ -59,7 +59,7 @@ export const handler = async (event: APIGatewayRequestAuthorizerEventV2): Promis
     const requestMethod = event.requestContext.http.method;
 
     if (!isAllowedMethod(clientId, requestMethod)) {
-        return deny(`client ${token.client_id} is read-only`);
+        return deny(`client ${clientId} is read-only`);
     }
 
     const controllerId = event.pathParameters?.controllerId;
