@@ -14,10 +14,8 @@ export const listControllers = (ownerId: string) => {
     return controllersTable.queryAll('#ownerId = :ownerId', { ':ownerId': ownerId }, { index: 'ownerId_Index' });
 };
 
-export const saveController = async (controller: Controller) => {
-    await controllersTable.put(controller);
-
-    return controller;
+export const saveController = (controller: Controller) => {
+    return controllersTable.put(controller);
 };
 
 export const updateController = async (controllerId: string, changes: Partial<Controller>) => {

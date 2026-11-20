@@ -6,7 +6,9 @@ import { requestSettingsSchema } from './request-settings.schema';
 
 export const handler = defineMessageHandler(requestSettingsSchema, async ({ controllerId }) => {
     const settings = await getSettings(controllerId);
-    const payload = toDeviceSettings(settings);
 
-    return publish(topics.settings(controllerId), payload);
+    return publish(
+        topics.settings(controllerId),
+        toDeviceSettings(settings)
+    );
 });

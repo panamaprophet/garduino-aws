@@ -1,4 +1,4 @@
-import { table } from '@/shared/db';
+import { isConditionFailure, table } from '@/shared/db';
 import { env } from '@/shared/env';
 import { ControllerEvent, toEventId } from './event.model';
 import { Range } from './range.schema';
@@ -41,11 +41,18 @@ export const saveEvent = async (event: ControllerEvent) => {
     return event;
 };
 
+const skipStale = (error: unknown) => {
+    if (isConditionFailure(error)) {
+        return null;
+    }
+
+    throw error;
+};
+
 export const saveLatestEvent = (event: ControllerEvent) => {
-    return latestTable.put(event, {
-        condition: 'attribute_not_exists(#ts) OR #ts < :ts',
-        values: { ':ts': event.ts },
-    });
+    const options = { condition: 'attribute_not_exists(#ts) OR #ts < :ts', values: { ':ts': event.ts } };
+
+    return latestTable.put(event, options).catch(skipStale);
 };
 
 export const listLatestEvents = (controllerId: string) => {

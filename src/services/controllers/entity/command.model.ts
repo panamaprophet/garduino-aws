@@ -1,17 +1,15 @@
-export type Command =
-    | { type: 'reboot' }
-    | { type: 'refresh' }
-    | { type: 'firmware.update'; firmwareKey: string; md5: string };
+import { z } from 'zod';
+import { commandSchema } from './command.schema';
+
+export type Command = z.output<typeof commandSchema>;
 
 export const toDeviceCommand = (command: Command, firmwareBaseUrl: string) => {
-    if (command.type === 'firmware.update') {
-        return {
-            v: 2,
-            type: command.type,
-            url: `${firmwareBaseUrl}/${encodeURI(command.firmwareKey)}`,
-            md5: command.md5,
-        };
+    if (command.type !== 'firmware.update') {
+        return { v: 2, ...command };
     }
 
-    return { v: 2, type: command.type };
+    const { firmwareKey, ...rest } = command;
+    const url = `${firmwareBaseUrl}/${encodeURI(firmwareKey)}`;
+
+    return { v: 2, ...rest, url };
 };

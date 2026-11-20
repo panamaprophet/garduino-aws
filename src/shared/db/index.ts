@@ -20,6 +20,8 @@ const client = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
     marshallOptions: { removeUndefinedValues: true },
 });
 
+export const isConditionFailure = (error: unknown) => error instanceof ConditionalCheckFailedException;
+
 const toNames = (...expressions: Array<string | undefined>) => {
     const placeholders = expressions.join(' ').match(/#\w+/g) ?? [];
     const entries = placeholders.map((placeholder) => [placeholder, placeholder.slice(1)]);
@@ -43,17 +45,9 @@ export const table = <T extends object>(name: string) => {
             ExpressionAttributeValues: options?.values,
         });
 
-        try {
-            await client.send(command);
+        await client.send(command);
 
-            return item;
-        } catch (error) {
-            if (error instanceof ConditionalCheckFailedException) {
-                return null;
-            }
-
-            throw error;
-        }
+        return item;
     };
 
     const remove = async (key: Item) => {
@@ -63,7 +57,7 @@ export const table = <T extends object>(name: string) => {
     };
 
     const query = async (condition: string, values: Item, options: QueryOptions = {}) => {
-        const { Items, LastEvaluatedKey } = await client.send(new QueryCommand({
+        const { Items = [], LastEvaluatedKey } = await client.send(new QueryCommand({
             TableName: name,
             IndexName: options.index,
             KeyConditionExpression: condition,
@@ -75,7 +69,7 @@ export const table = <T extends object>(name: string) => {
             ExclusiveStartKey: options.startKey,
         }));
 
-        return { items: (Items ?? []) as T[], lastKey: LastEvaluatedKey };
+        return { items: Items as T[], lastKey: LastEvaluatedKey };
     };
 
     const queryAll = async (condition: string, values: Item, options: QueryOptions = {}) => {
