@@ -1,293 +1,470 @@
 {
-	"info": {
-		"_postman_id": "garduino-aws-api",
-		"name": "Garduino AWS",
-		"description": "Garduino IoT controller management API.\n\n## Setup\n\n1. Import the environment file and fill in the variable values\n2. Go to the collection's **Authorization** tab and click **Get New Access Token** to authenticate via Cognito",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"auth": {
-		"type": "oauth2",
-		"oauth2": [
-			{
-				"key": "grant_type",
-				"value": "authorization_code",
-				"type": "string"
-			},
-			{
-				"key": "authUrl",
-				"value": "https://{{cognitoDomain}}.auth.{{region}}.amazoncognito.com/oauth2/authorize",
-				"type": "string"
-			},
-			{
-				"key": "accessTokenUrl",
-				"value": "https://{{cognitoDomain}}.auth.{{region}}.amazoncognito.com/oauth2/token",
-				"type": "string"
-			},
-			{
-				"key": "clientId",
-				"value": "{{cognitoClientId}}",
-				"type": "string"
-			},
-			{
-				"key": "scope",
-				"value": "openid",
-				"type": "string"
-			},
-			{
-				"key": "redirect_uri",
-				"value": "https://oauth.pstmn.io/v1/callback",
-				"type": "string"
-			},
-			{
-				"key": "tokenName",
-				"value": "Garduino Cognito Token",
-				"type": "string"
-			},
-			{
-				"key": "addTokenTo",
-				"value": "header",
-				"type": "string"
-			},
-			{
-				"key": "useBrowser",
-				"value": true,
-				"type": "boolean"
-			},
-			{
-				"key": "challengeAlgorithm",
-				"value": "S256",
-				"type": "string"
-			},
-			{
-				"key": "client_authentication",
-				"value": "body",
-				"type": "string"
-			}
-		]
-	},
-	"event": [],
-	"variable": [],
-	"item": [
-		{
-			"name": "Controllers",
-			"item": [
-				{
-					"name": "List Controllers",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/v1/controllers",
-							"host": ["{{baseUrl}}"],
-							"path": ["v1", "controllers"]
-						},
-						"description": "Returns an array of controller IDs owned by the authenticated user."
-					},
-					"response": []
-				},
-				{
-					"name": "Create Controller",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/v1/controllers",
-							"host": ["{{baseUrl}}"],
-							"path": ["v1", "controllers"]
-						},
-						"description": "Provisions a new IoT controller: creates an IoT Thing, MQTT policy, certificates, and a default configuration.\n\nThe response includes TLS certificates needed for MQTT connectivity."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Configuration",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/v1/controllers/:controllerId",
-							"host": ["{{baseUrl}}"],
-							"path": ["v1", "controllers", ":controllerId"],
-							"query": [
-								{
-									"key": "raw",
-									"value": "true",
-									"description": "Return raw DynamoDB configuration instead of time-relative mapped version",
-									"disabled": true
-								}
-							],
-							"variable": [
-								{
-									"key": "controllerId",
-									"value": ""
-								}
-							]
-						},
-						"description": "Returns the configuration for a specific controller.\n\nBy default returns the time-relative mapped configuration. Add `?raw=true` to get the raw stored values."
-					},
-					"response": []
-				},
-				{
-					"name": "Update Configuration",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"onTime\": \"12:00\",\n    \"duration\": 43200000,\n    \"thresholdTemperature\": 30,\n    \"fanSpeed\": 125\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/v1/controllers/:controllerId",
-							"host": ["{{baseUrl}}"],
-							"path": ["v1", "controllers", ":controllerId"],
-							"variable": [
-								{
-									"key": "controllerId",
-									"value": ""
-								}
-							]
-						},
-						"description": "Replaces the configuration for a controller.\n\n**Body fields:**\n- `onTime` — time of day as `HH:MM` (e.g. `\"12:00\"`)\n- `duration` — duration in milliseconds\n- `thresholdTemperature` — temperature threshold\n- `fanSpeed` — fan speed value (0-255)"
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Controller",
-					"request": {
-						"method": "DELETE",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/v1/controllers/:controllerId",
-							"host": ["{{baseUrl}}"],
-							"path": ["v1", "controllers", ":controllerId"],
-							"variable": [
-								{
-									"key": "controllerId",
-									"value": ""
-								}
-							]
-						},
-						"description": "Removes the configuration record for a controller."
-					},
-					"response": []
-				}
-			],
-			"description": "Manage IoT controller provisioning and configuration."
-		},
-		{
-			"name": "Data",
-			"item": [
-				{
-					"name": "Push Data",
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"temperature\": 25.5,\n    \"humidity\": 60,\n    \"fanSpeed\": 125,\n    \"isOn\": true,\n    \"event\": \"update\"\n}"
-						},
-						"url": {
-							"raw": "{{baseUrl}}/v1/controllers/:controllerId/data",
-							"host": ["{{baseUrl}}"],
-							"path": ["v1", "controllers", ":controllerId", "data"],
-							"variable": [
-								{
-									"key": "controllerId",
-									"value": ""
-								}
-							]
-						},
-						"description": "Push a data event for a controller. The payload is stored with auto-generated `id` and `ts` fields."
-					},
-					"response": []
-				},
-				{
-					"name": "Query Data",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/v1/controllers/:controllerId/data",
-							"host": ["{{baseUrl}}"],
-							"path": ["v1", "controllers", ":controllerId", "data"],
-							"variable": [
-								{
-									"key": "controllerId",
-									"value": ""
-								}
-							],
-							"query": [
-								{
-									"key": "startDate",
-									"value": "",
-									"description": "Start timestamp (defaults to 24 hours ago)",
-									"disabled": true
-								},
-								{
-									"key": "endDate",
-									"value": "",
-									"description": "End timestamp (defaults to now)",
-									"disabled": true
-								}
-							]
-						},
-						"description": "Query data events for a controller within a time range.\n\nDefaults to the last 24 hours if no dates are provided."
-					},
-					"response": []
-				}
-			],
-			"description": "Push and query sensor data events for controllers."
-		},
-		{
-			"name": "Firmware",
-			"item": [
-				{
-					"name": "List Firmware",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/v1/firmware",
-							"host": ["{{baseUrl}}"],
-							"path": ["v1", "firmware"]
-						},
-						"description": "Lists all available firmware files sorted by last modified (newest first).\n\nReturns `key`, `lastModified` (epoch ms), `size`, and `md5` for each file."
-					},
-					"response": []
-				},
-				{
-					"name": "Get Firmware Download URL",
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{baseUrl}}/v1/firmware/download?key=firmware.bin",
-							"host": ["{{baseUrl}}"],
-							"path": ["v1", "firmware", "download"],
-							"query": [
-								{
-									"key": "key",
-									"value": "firmware.bin",
-									"description": "S3 object key of the firmware file"
-								}
-							]
-						},
-						"description": "Returns a pre-signed S3 download URL and MD5 hash for a specific firmware file."
-					},
-					"response": []
-				}
-			],
-			"description": "Browse and download firmware binaries."
-		}
-	]
+    "info": {
+        "_postman_id": "garduino-aws-api-v2",
+        "name": "Garduino API v2",
+        "description": "Garduino HTTP API v2. The full reference is docs/api.md.\n\n## Setup\n\n1. Import `garduino.postman_environment.json` and fill it from the stack outputs: `baseUrl` = `ApiUrl`, `authDomain` = `AuthDomain`, `clientId` = `McpClientId`.\n2. Open the collection's **Authorization** tab and click **Get New Access Token**. Postman opens the Cognito sign-in page and catches the redirect to `callbackUrl` itself.\n3. Set `controllerId` to one of your controllers.\n\nThe only client with OAuth sign-in is the MCP client, which is limited to `GET` requests: write requests return 403 with its token.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "oauth2",
+        "oauth2": [
+            {
+                "key": "grant_type",
+                "value": "authorization_code_with_pkce",
+                "type": "string"
+            },
+            {
+                "key": "authUrl",
+                "value": "{{authDomain}}/oauth2/authorize",
+                "type": "string"
+            },
+            {
+                "key": "accessTokenUrl",
+                "value": "{{authDomain}}/oauth2/token",
+                "type": "string"
+            },
+            {
+                "key": "clientId",
+                "value": "{{clientId}}",
+                "type": "string"
+            },
+            {
+                "key": "redirect_uri",
+                "value": "{{callbackUrl}}",
+                "type": "string"
+            },
+            {
+                "key": "scope",
+                "value": "openid",
+                "type": "string"
+            },
+            {
+                "key": "challengeAlgorithm",
+                "value": "S256",
+                "type": "string"
+            },
+            {
+                "key": "client_authentication",
+                "value": "body",
+                "type": "string"
+            },
+            {
+                "key": "useBrowser",
+                "value": false,
+                "type": "boolean"
+            },
+            {
+                "key": "addTokenTo",
+                "value": "header",
+                "type": "string"
+            },
+            {
+                "key": "tokenName",
+                "value": "Garduino",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Controllers",
+            "item": [
+                {
+                    "name": "List controllers",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v2/controllers",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v2",
+                                "controllers"
+                            ]
+                        },
+                        "description": "Lists the caller's controllers."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create controller",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v2/controllers",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v2",
+                                "controllers"
+                            ]
+                        },
+                        "description": "Provisions a controller and returns its certificates and the IoT data endpoint. Responds 201. The private key is returned only once.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Growbox\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get controller",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v2/controllers/{{controllerId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v2",
+                                "controllers",
+                                "{{controllerId}}"
+                            ]
+                        },
+                        "description": "Returns one controller."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Rename controller",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v2/controllers/{{controllerId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v2",
+                                "controllers",
+                                "{{controllerId}}"
+                            ]
+                        },
+                        "description": "Renames a controller.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Balcony\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete controller",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v2/controllers/{{controllerId}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v2",
+                                "controllers",
+                                "{{controllerId}}"
+                            ]
+                        },
+                        "description": "Deactivates every certificate and deletes the controller. Returns the deleted controller and the revoked certificate ids."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Rotate certificate",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v2/controllers/{{controllerId}}/certificate",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v2",
+                                "controllers",
+                                "{{controllerId}}",
+                                "certificate"
+                            ]
+                        },
+                        "description": "Issues a new certificate and deactivates the previous ones. Returns the certificates and the IoT data endpoint."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Send command",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v2/controllers/{{controllerId}}/commands",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v2",
+                                "controllers",
+                                "{{controllerId}}",
+                                "commands"
+                            ]
+                        },
+                        "description": "Sends a command to the device. Responds 202.\n\nBodies: `{ \"type\": \"reboot\" }`, `{ \"type\": \"refresh\" }`, `{ \"type\": \"firmware.update\", \"firmwareKey\": \"<key>\", \"md5\": \"<md5>\" }` with values from List firmware.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"type\": \"refresh\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Settings",
+            "item": [
+                {
+                    "name": "Get settings",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v2/controllers/{{controllerId}}/settings",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v2",
+                                "controllers",
+                                "{{controllerId}}",
+                                "settings"
+                            ]
+                        },
+                        "description": "Returns all module settings with defaults applied."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update settings",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/v2/controllers/{{controllerId}}/settings",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v2",
+                                "controllers",
+                                "{{controllerId}}",
+                                "settings"
+                            ]
+                        },
+                        "description": "Merges a partial update, saves it and publishes the full settings to the device. `onTime` is HH:mm in UTC.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"light\": {\n        \"onTime\": \"05:00\"\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Telemetry",
+            "item": [
+                {
+                    "name": "List events",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v2/controllers/{{controllerId}}/telemetry",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v2",
+                                "controllers",
+                                "{{controllerId}}",
+                                "telemetry"
+                            ],
+                            "query": [
+                                {
+                                    "key": "from",
+                                    "value": "2026-11-19T00:00:00Z",
+                                    "disabled": true,
+                                    "description": "RFC 3339; default: to minus 24 h"
+                                },
+                                {
+                                    "key": "to",
+                                    "value": "2026-11-20T00:00:00Z",
+                                    "disabled": true,
+                                    "description": "RFC 3339; default: now"
+                                },
+                                {
+                                    "key": "order",
+                                    "value": "desc",
+                                    "disabled": true,
+                                    "description": "asc or desc"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "100",
+                                    "disabled": true,
+                                    "description": "1-1000"
+                                },
+                                {
+                                    "key": "types",
+                                    "value": "boot,connection",
+                                    "disabled": true,
+                                    "description": "comma-separated event types"
+                                },
+                                {
+                                    "key": "cursor",
+                                    "value": "",
+                                    "disabled": true,
+                                    "description": "nextCursor of the previous page; replaces all other parameters"
+                                }
+                            ]
+                        },
+                        "description": "Raw events in a range of at most 31 days, newest first by default. Follow `meta.pagination.nextCursor` with `cursor` alone."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Summary",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v2/controllers/{{controllerId}}/telemetry/summary?interval=1h",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v2",
+                                "controllers",
+                                "{{controllerId}}",
+                                "telemetry",
+                                "summary"
+                            ],
+                            "query": [
+                                {
+                                    "key": "interval",
+                                    "value": "1h",
+                                    "disabled": false,
+                                    "description": "10m, 1h or 1d; at most 1000 buckets"
+                                },
+                                {
+                                    "key": "from",
+                                    "value": "2026-11-19T00:00:00Z",
+                                    "disabled": true,
+                                    "description": "RFC 3339; default: to minus 24 h"
+                                },
+                                {
+                                    "key": "to",
+                                    "value": "2026-11-20T00:00:00Z",
+                                    "disabled": true,
+                                    "description": "RFC 3339; default: now"
+                                }
+                            ]
+                        },
+                        "description": "Readings (min, max, avg) and event counts per bucket."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Latest",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v2/controllers/{{controllerId}}/telemetry/latest",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v2",
+                                "controllers",
+                                "{{controllerId}}",
+                                "telemetry",
+                                "latest"
+                            ]
+                        },
+                        "description": "The newest event of each type: module states, online status, firmware version and modules."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Firmware",
+            "item": [
+                {
+                    "name": "List firmware",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/v2/firmware",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "v2",
+                                "firmware"
+                            ]
+                        },
+                        "description": "Firmware builds in the firmware bucket, newest first, with the key and md5 needed for firmware.update."
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
 }

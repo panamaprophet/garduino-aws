@@ -14,7 +14,7 @@ Everything a controller reports, how it travels and where it is stored. Device p
 
 - `<id>` is the controllerId. It is also the IoT thing name and the MQTT client id.
 - The device policy restricts a device to its own `controllers/<id>/*` topics.
-- Every device message carries `"v": 2`.
+- Every device message carries `"v": 2`. Ingestion does not check it yet; it reserves room for a future protocol version on the same topics.
 
 ## Device events
 
@@ -93,22 +93,23 @@ These are not stored as events. The device's reaction shows up as events.
 
 ## Reading
 
-| Route | Returns |
-|---|---|
-| `GET /v2/controllers/{id}/telemetry` | raw events; `from`, `to` (≤ 31 days, default 24 h), `order`, `limit` (≤ 1000), `types`, `cursor` |
-| `GET /v2/controllers/{id}/telemetry/summary` | per bucket of `interval` = `10m` / `1h` / `1d`: min, max and avg of every numeric `telemetry` reading (`sensor.temperature`, `fan.speed`, …) and a count of events per type |
-| `GET /v2/controllers/{id}/telemetry/latest` | the newest event of each type: online status from `connection`, firmware and modules from `boot`, the current state of each module |
+Stored events are served by three routes, described in [api.md](api.md#telemetry):
+
+- `GET /v2/controllers/{id}/telemetry`: raw events, filtered and paginated
+- `GET /v2/controllers/{id}/telemetry/summary`: per-bucket readings and event counts
+- `GET /v2/controllers/{id}/telemetry/latest`: the newest event of each type
 
 ## Adding a module
 
-1. Firmware: implement the module with `name()`, `apply()` and `getStatus()`, and call `changed()` when its state changes.
-2. Telemetry: add `entity/modules/<module>.schema.ts` with the module's state.
-3. Telemetry: add the module to `telemetry` and add a `<module>:change` line in `report-event.schema.ts`.
-4. Settings: add `entity/modules/<module>.schema.ts` with settings and defaults, if the module is configurable.
+1. **Firmware:** implement the module with `name()`, `apply()` and `getStatus()`, register it, and call `changed()` when its state changes.
+2. **Telemetry:** add `entity/modules/<module>.schema.ts` with the module's state, then add the module to `telemetrySchema` and a `<module>:change` schema in `report-event.schema.ts`.
+3. **Settings**, if the module is configurable: add `entity/modules/<module>.schema.ts` with the settings schema and defaults, add the module to `Settings` and `defaultSettings` in `settings.model.ts`, and to `update-settings.schema.ts`.
+
+Nothing else changes: topics, the device policy, storage and the summary pick the module up automatically.
 
 ## Legacy events (protocol v1)
 
-Mapped by the migration and rejected by v2 ingestion.
+v1 history is not migrated and v2 ingestion rejects v1 messages. For reference when updating firmware, this is how v1 messages correspond to v2:
 
 | v1 | v2 |
 |---|---|

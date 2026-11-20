@@ -1,104 +1,31 @@
 # Garduino AWS
 
-AWS IoT cloud backend for garden controller management. Includes a data collector, configuration manager, firmware service, and MQTT message handlers.
+AWS backend for garduino garden controllers: provisioning, settings, telemetry and firmware updates over AWS IoT Core, with an HTTP API for the web app and a read-only MCP server.
 
-Built with TypeScript, AWS CDK, Lambda, DynamoDB, IoT Core, S3, and Cognito.
+Built with TypeScript, AWS CDK, Lambda, API Gateway (HTTP API), DynamoDB, IoT Core, S3 and Cognito.
 
-## API Endpoints
+## Services
 
-All HTTP endpoints require JWT authorization (AWS Cognito). Base path: `/v1`.
+| Service | Owns | Does |
+|---|---|---|
+| `controllers` | `controllers` table, IoT things and certificates, the device policy | provisioning, rename, delete, certificate rotation, device commands, the request authorizer |
+| `settings` | `settings` table | per-module settings with defaults, delivery to the device on change and on request |
+| `telemetry` | `events` and `latest` tables | ingestion of device and connection events, history, summaries, latest state |
+| `firmware` | firmware bucket | the list of firmware builds |
 
-### Controllers
+Services never read each other's tables or call each other. Each one lives in `src/services/<service>/` with one folder per feature (one Lambda per feature) and an `entity/` folder for its model, schemas and data access. Routes and topics are declared in `<service>.config.ts`; infrastructure is in `cdk/`.
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/v1/controllers` | List controller IDs for authenticated user |
-| POST | `/v1/controllers` | Provision a new IoT controller (creates Thing, certificates, policy) |
-| GET | `/v1/controllers/{controllerId}` | Get controller configuration (add `?raw=true` for stored format) |
-| PUT | `/v1/controllers/{controllerId}` | Update controller configuration |
-| DELETE | `/v1/controllers/{controllerId}` | Delete controller configuration |
+## Documentation
 
-### Data
+- [docs/api.md](docs/api.md): HTTP API v2 reference
+- [docs/auth.md](docs/auth.md): users, clients, request authorization and device certificates
+- [docs/devices.md](docs/devices.md): provisioning a controller, connection, firmware updates
+- [docs/events.md](docs/events.md): device protocol v2, events and how they are stored
+- [docs/garduino.postman_collection.json](docs/garduino.postman_collection.json) with [the environment](docs/garduino.postman_environment.json): the API in Postman
 
-| Method | Path | Description |
-|--------|------|-------------|
-| PUT | `/v1/controllers/{controllerId}/data` | Push a sensor data event |
-| GET | `/v1/controllers/{controllerId}/data` | Query events by time range (`?startDate=&endDate=`, defaults to last 24h) |
+## Configuration
 
-### Firmware
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/v1/firmware` | List available firmware files |
-| GET | `/v1/firmware/download?key=...` | Get a pre-signed S3 download URL for a firmware file |
-
-## MQTT Topics
-
-Communication with controllers happens over AWS IoT Core MQTT.
-
-| Topic | Direction | Description |
-|-------|-----------|-------------|
-| `controllers/{controllerId}/config/pub` | Device -> Cloud | Device requests its configuration. Cloud responds on the `sub` topic. |
-| `controllers/{controllerId}/config/sub` | Cloud -> Device | Cloud publishes mapped configuration to the device |
-| `controllers/{controllerId}/events/pub` | Device -> Cloud | Device publishes sensor events for storage |
-
-## Configuration Shape
-
-**Stored (raw) configuration:**
-
-```json
-{
-  "controllerId": "uuid",
-  "ownerId": "uuid",
-  "onTime": "12:00",
-  "duration": 43200000,
-  "thresholdTemperature": 30,
-  "fanSpeed": 125
-}
-```
-
-- `onTime` — time of day in `HH:MM` (UTC) when the device turns on
-- `duration` — how long the device stays on, in milliseconds
-- `thresholdTemperature` — temperature threshold
-- `fanSpeed` — fan speed (0-255)
-
-**Mapped (time-relative) configuration** returned by default from `GET /v1/controllers/{controllerId}` and via MQTT:
-
-```json
-{
-  "isOn": true,
-  "switchIn": 18000000,
-  "duration": 43200000,
-  "fanSpeed": 125,
-  "thresholdTemperature": 30
-}
-```
-
-- `isOn` — whether the device should be on right now
-- `switchIn` — milliseconds until the next state change
-
-## Event Shape
-
-Events are flexible — any JSON payload is accepted. The backend adds `id` (UUID) and `ts` (timestamp) automatically.
-
-**Typical event from a controller:**
-
-```json
-{
-  "fan": { "currentSpeed": 125 },
-  "light": { "isOn": true },
-  "sensor": {
-    "temperature": 25.5,
-    "humidity": 60,
-    "stabilityFactor": 0.9
-  },
-  "event": "update"
-}
-```
-
-## Environment Variables
-
-Copy `.env.example` to `.env` and fill in the values:
+Copy `.env.example` to `.env`:
 
 ```
 API_VERSION=v2
@@ -108,43 +35,40 @@ AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
 ```
 
-- `API_VERSION` — used to namespace the entire deployment. The CDK stack is named `garduino-{API_VERSION}` (e.g., `garduino-v1`), and all resources (DynamoDB tables, S3 buckets, Lambda functions, API Gateway) include this version in their names. This allows running multiple independent versions of the stack side-by-side.
-The stack owns the Cognito user pool. Self sign-up is disabled: users are created by an admin. The Cognito sign-in domain used by the MCP client is `<stack name>-<suffix of the stack id>`, unique without any configuration. The stack outputs `UserPoolId`, `WebClientId`, `McpClientId` and `AuthDomain` for the web app and the MCP server.
+`API_VERSION` names the deployment: the stack is `garduino-<API_VERSION>`, and every resource name includes it, so versions can run side by side.
 
-## Deployment
+The stack creates everything else, including the Cognito user pool. Its outputs:
 
-### Prerequisites
+| Output | Used by |
+|---|---|
+| `ApiUrl` | web app, MCP server |
+| `UserPoolId`, `WebClientId` | web app |
+| `McpClientId`, `AuthDomain` | MCP server |
+| `FirmwareBucket` | firmware publishing |
 
-- Node.js
-- [pnpm](https://pnpm.io/) v10+
-- AWS credentials configured (via `.env` or AWS CLI)
+## Development
 
-### Install dependencies
+Requires Node.js and [pnpm](https://pnpm.io/) 10+.
 
 ```sh
 pnpm install
+pnpm typecheck
+pnpm check        # Biome: lint and formatting
+pnpm format       # Biome: apply fixes and formatting
+pnpm exec cdk synth
 ```
 
-### Deploy
+## Deployment
 
 ```sh
 pnpm run deploy
 ```
 
-This runs `cdk deploy` which synthesizes and deploys the CloudFormation stack.
+Pull requests run the check job of `.github/workflows/deploy.yml`: Biome, the type-check and `cdk synth`. Pushes to `main` run the same checks and then deploy with the GitHub environment `v2`, which needs:
 
-### CI/CD
+- secrets `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
+- variables `AWS_REGION` and `API_VERSION`
 
-Pushes to `main` trigger a GitHub Actions workflow (`.github/workflows/deploy.yml`) that type-checks and deploys automatically. Required GitHub secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`. Required GitHub variables: `AWS_REGION`, `API_VERSION`.
+After the first deploy, create a user as described in [docs/auth.md](docs/auth.md#users).
 
-### IoT Endpoint
-
-To get the IoT Core endpoint for device connections:
-
-```sh
-aws iot describe-endpoint
-```
-
-## API Documentation
-
-A Postman collection is available in `docs/garduino.postman_collection.json`.
+Tables, the firmware bucket and the user pool are retained when the stack is deleted, and tables and the user pool have deletion protection.
