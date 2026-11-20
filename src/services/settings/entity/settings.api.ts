@@ -1,7 +1,7 @@
 import { table } from '@/shared/db';
 import { env } from '@/shared/env';
-import { DeepPartial, merge } from '@/shared/object';
-import { defaultSettings, Settings } from './settings.model';
+import { type DeepPartial, merge } from '@/shared/object';
+import { defaultSettings, type Settings } from './settings.model';
 
 interface StoredSettings extends DeepPartial<Settings> {
     controllerId: string;

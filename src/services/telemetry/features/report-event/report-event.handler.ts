@@ -1,6 +1,6 @@
 import { defineMessageHandler } from '@/shared/mqtt';
-import { createEvent } from '../../entity/event.model';
 import { saveEvent, saveLatestEvent } from '../../entity/event.api';
+import { createEvent } from '../../entity/event.model';
 import { reportEventSchema } from './report-event.schema';
 
 export const handler = defineMessageHandler(reportEventSchema, async ({ controllerId, receivedAt, payload }) => {

@@ -1,7 +1,7 @@
 import { table } from '@/shared/db';
 import { env } from '@/shared/env';
 import { merge } from '@/shared/object';
-import { Controller } from './controller.model';
+import type { Controller } from './controller.model';
 
 const tableName = env('CONTROLLERS_TABLE');
 const controllersTable = table<Controller>(tableName);

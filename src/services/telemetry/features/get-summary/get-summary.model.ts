@@ -1,5 +1,5 @@
-import { ControllerEvent } from '../../entity/event.model';
-import { intervals, SummaryQuery } from './get-summary.schema';
+import type { ControllerEvent } from '../../entity/event.model';
+import { intervals, type SummaryQuery } from './get-summary.schema';
 
 const round = (value: number) => Math.round(value * 100) / 100;
 
@@ -14,9 +14,11 @@ const toStats = (values: number[]) => {
 const toMetrics = (data: ControllerEvent['data']) => {
     const modules = Object.entries(data as Record<string, Record<string, unknown>>);
 
-    return modules.flatMap(([module, fields]) => Object.entries(fields)
-        .filter((entry): entry is [string, number] => typeof entry[1] === 'number')
-        .map(([field, value]) => [`${module}.${field}`, value] as const));
+    return modules.flatMap(([module, fields]) =>
+        Object.entries(fields)
+            .filter((entry): entry is [string, number] => typeof entry[1] === 'number')
+            .map(([field, value]) => [`${module}.${field}`, value] as const),
+    );
 };
 
 const toBucket = (start: number, size: number, events: ControllerEvent[]) => {
@@ -27,9 +29,7 @@ const toBucket = (start: number, size: number, events: ControllerEvent[]) => {
         counts[event.type] = (counts[event.type] ?? 0) + 1;
     }
 
-    const metrics = events
-        .filter((event) => event.type === 'telemetry')
-        .flatMap((event) => toMetrics(event.data));
+    const metrics = events.filter((event) => event.type === 'telemetry').flatMap((event) => toMetrics(event.data));
 
     for (const [name, value] of metrics) {
         const list = values[name] ?? [];

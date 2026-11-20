@@ -1,8 +1,8 @@
-import { Construct } from 'constructs';
-import { CfnTopicRule } from 'aws-cdk-lib/aws-iot';
 import { Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
-import { IFunction } from 'aws-cdk-lib/aws-lambda';
-import { ILogGroup } from 'aws-cdk-lib/aws-logs';
+import { CfnTopicRule } from 'aws-cdk-lib/aws-iot';
+import type { IFunction } from 'aws-cdk-lib/aws-lambda';
+import type { ILogGroup } from 'aws-cdk-lib/aws-logs';
+import { Construct } from 'constructs';
 import { createLogGroup } from '../lib';
 
 interface TopicRuleProps {

@@ -1,13 +1,15 @@
 import { env } from '@/shared/env';
 import { controllerParams, defineHandler } from '@/shared/http';
 import { publish } from '@/shared/mqtt';
+import { topics } from '../../controllers.config';
 import { toDeviceCommand } from '../../entity/command.model';
 import { commandSchema } from '../../entity/command.schema';
-import { topics } from '../../controllers.config';
 
 const firmwareBaseUrl = env('FIRMWARE_BASE_URL');
 
-export const handler = defineHandler({ params: controllerParams, body: commandSchema }, async ({ params: { controllerId }, body }) => {
+const schema = { params: controllerParams, body: commandSchema };
+
+export const handler = defineHandler(schema, async ({ params: { controllerId }, body }) => {
     const payload = toDeviceCommand(body, firmwareBaseUrl);
 
     await publish(topics.commands(controllerId), payload);

@@ -1,11 +1,11 @@
-import { join } from 'path';
-import { Construct } from 'constructs';
-import { ArnFormat, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
-import { Table, TableProps } from 'aws-cdk-lib/aws-dynamodb';
-import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { join } from 'node:path';
+import { ArnFormat, type Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
+import { Table, type TableProps } from 'aws-cdk-lib/aws-dynamodb';
+import type { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { LogGroup, RetentionDays } from 'aws-cdk-lib/aws-logs';
+import type { Construct } from 'constructs';
 import type { Api } from '../constructs/http-api';
 import type { Mqtt } from '../constructs/mqtt-api';
 

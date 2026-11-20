@@ -1,7 +1,7 @@
 import { isConditionFailure, table } from '@/shared/db';
 import { env } from '@/shared/env';
-import { ControllerEvent, toEventId } from './event.model';
-import { Range } from './range.schema';
+import { type ControllerEvent, toEventId } from './event.model';
+import type { Range } from './range.schema';
 
 const RANGE_CONDITION = '#controllerId = :controllerId AND #id BETWEEN :from AND :to';
 

@@ -33,7 +33,7 @@ export const table = <T extends object>(name: string) => {
     const get = async (key: Item) => {
         const { Item } = await client.send(new GetCommand({ TableName: name, Key: key }));
 
-        return Item ? Item as T : null;
+        return Item ? (Item as T) : null;
     };
 
     const put = async (item: T, options?: PutOptions) => {
@@ -53,21 +53,23 @@ export const table = <T extends object>(name: string) => {
     const remove = async (key: Item) => {
         const { Attributes } = await client.send(new DeleteCommand({ TableName: name, Key: key, ReturnValues: 'ALL_OLD' }));
 
-        return Attributes ? Attributes as T : null;
+        return Attributes ? (Attributes as T) : null;
     };
 
     const query = async (condition: string, values: Item, options: QueryOptions = {}) => {
-        const { Items = [], LastEvaluatedKey } = await client.send(new QueryCommand({
-            TableName: name,
-            IndexName: options.index,
-            KeyConditionExpression: condition,
-            FilterExpression: options.filter,
-            ExpressionAttributeNames: toNames(condition, options.filter),
-            ExpressionAttributeValues: values,
-            Limit: options.limit,
-            ScanIndexForward: options.order !== 'desc',
-            ExclusiveStartKey: options.startKey,
-        }));
+        const { Items = [], LastEvaluatedKey } = await client.send(
+            new QueryCommand({
+                TableName: name,
+                IndexName: options.index,
+                KeyConditionExpression: condition,
+                FilterExpression: options.filter,
+                ExpressionAttributeNames: toNames(condition, options.filter),
+                ExpressionAttributeValues: values,
+                Limit: options.limit,
+                ScanIndexForward: options.order !== 'desc',
+                ExclusiveStartKey: options.startKey,
+            }),
+        );
 
         return { items: Items as T[], lastKey: LastEvaluatedKey };
     };

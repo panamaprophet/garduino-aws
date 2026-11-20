@@ -1,12 +1,10 @@
-import { APIGatewayRequestAuthorizerEventV2, APIGatewaySimpleAuthorizerWithContextResult } from 'aws-lambda';
 import { CognitoJwtVerifier } from 'aws-jwt-verify';
+import type { APIGatewayRequestAuthorizerEventV2, APIGatewaySimpleAuthorizerWithContextResult } from 'aws-lambda';
 import { env } from '@/shared/env';
-import { RequestContext } from '@/shared/http';
+import type { RequestContext } from '@/shared/http';
 import { getController } from '../../entity/controller.api';
 
-type AuthorizerResult = APIGatewaySimpleAuthorizerWithContextResult<
-    RequestContext | Record<string, never>
->;
+type AuthorizerResult = APIGatewaySimpleAuthorizerWithContextResult<RequestContext | Record<string, never>>;
 
 const READ_ONLY_METHODS = ['GET', 'HEAD'];
 

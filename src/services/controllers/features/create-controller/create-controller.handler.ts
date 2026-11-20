@@ -1,11 +1,13 @@
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import { defineHandler } from '@/shared/http';
+import { saveController } from '../../entity/controller.api';
 import { createController, toControllerResponse } from '../../entity/controller.model';
 import { controllerSchema } from '../../entity/controller.schema';
-import { saveController } from '../../entity/controller.api';
 import { createThing, getEndpoint, issueCertificate } from '../../entity/thing.api';
 
-export const handler = defineHandler({ body: controllerSchema }, async ({ userId, body }) => {
+const schema = { body: controllerSchema };
+
+export const handler = defineHandler(schema, async ({ userId, body }) => {
     const controllerId = randomUUID();
 
     const thingName = await createThing(controllerId);

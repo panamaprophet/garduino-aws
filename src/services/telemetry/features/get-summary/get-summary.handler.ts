@@ -1,10 +1,12 @@
 import { controllerParams, defineHandler } from '@/shared/http';
 import { listEvents } from '../../entity/event.api';
 import { toRangeResponse } from '../../entity/range.schema';
-import { getSummarySchema } from './get-summary.schema';
 import { summarize } from './get-summary.model';
+import { getSummarySchema } from './get-summary.schema';
 
-export const handler = defineHandler({ params: controllerParams, query: getSummarySchema }, async ({ params: { controllerId }, query }) => {
+const schema = { params: controllerParams, query: getSummarySchema };
+
+export const handler = defineHandler(schema, async ({ params: { controllerId }, query }) => {
     const events = await listEvents(controllerId, query);
 
     const data = summarize(events, query);

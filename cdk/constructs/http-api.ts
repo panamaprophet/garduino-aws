@@ -1,10 +1,10 @@
-import { Construct } from 'constructs';
 import { Duration, Stack } from 'aws-cdk-lib';
 import { Cors } from 'aws-cdk-lib/aws-apigateway';
-import { IFunction } from 'aws-cdk-lib/aws-lambda';
+import { type CfnStage, CorsHttpMethod, HttpApi, HttpMethod } from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpLambdaAuthorizer, HttpLambdaResponseType } from 'aws-cdk-lib/aws-apigatewayv2-authorizers';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
-import { HttpApi, CorsHttpMethod, HttpMethod, CfnStage } from 'aws-cdk-lib/aws-apigatewayv2';
+import type { IFunction } from 'aws-cdk-lib/aws-lambda';
+import { Construct } from 'constructs';
 
 export class Api extends Construct {
     readonly url: string;

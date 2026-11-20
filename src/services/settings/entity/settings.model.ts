@@ -1,6 +1,6 @@
-import { Fan, fanDefaults } from './modules/fan.schema';
-import { Light, lightDefaults } from './modules/light.schema';
-import { Sensor, sensorDefaults } from './modules/sensor.schema';
+import { type Fan, fanDefaults } from './modules/fan.schema';
+import { type Light, lightDefaults } from './modules/light.schema';
+import { type Sensor, sensorDefaults } from './modules/sensor.schema';
 
 export interface Settings {
     light: Light;

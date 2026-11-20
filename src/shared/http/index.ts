@@ -1,4 +1,4 @@
-import { APIGatewayProxyEventV2WithLambdaAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
+import type { APIGatewayProxyEventV2WithLambdaAuthorizer, APIGatewayProxyStructuredResultV2 } from 'aws-lambda';
 import { z } from 'zod';
 
 export interface RequestContext {
@@ -31,7 +31,12 @@ type HttpEvent = APIGatewayProxyEventV2WithLambdaAuthorizer<Partial<RequestConte
 type HttpResult = APIGatewayProxyStructuredResultV2;
 
 export class HttpError extends Error {
-    constructor(readonly status: number, readonly code: string, message: string, readonly details?: unknown) {
+    constructor(
+        readonly status: number,
+        readonly code: string,
+        message: string,
+        readonly details?: unknown,
+    ) {
         super(message);
     }
 }
@@ -122,16 +127,15 @@ const toErrorResult = (error: unknown) => {
     return json(status, { error: { code, message, details } });
 };
 
-export const defineHandler = <S extends RequestSchema, T>(
-    schemas: S,
-    handler: (request: HttpRequest<S>) => Promise<HttpResponse<T>>,
-) => async (event: HttpEvent): Promise<HttpResult> => {
-    try {
-        const request = toRequest(schemas, event);
-        const { data, meta, status = 200 } = await handler(request);
+export const defineHandler = <S extends RequestSchema, T>(schemas: S, handler: (request: HttpRequest<S>) => Promise<HttpResponse<T>>) => {
+    return async (event: HttpEvent): Promise<HttpResult> => {
+        try {
+            const request = toRequest(schemas, event);
+            const { data, meta, status = 200 } = await handler(request);
 
-        return json(status, { data, meta: { ...meta, requestId: event.requestContext.requestId } });
-    } catch (error) {
-        return toErrorResult(error);
-    }
+            return json(status, { data, meta: { ...meta, requestId: event.requestContext.requestId } });
+        } catch (error) {
+            return toErrorResult(error);
+        }
+    };
 };

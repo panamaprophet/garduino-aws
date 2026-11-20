@@ -1,5 +1,5 @@
-import { z } from 'zod';
-import { commandSchema } from './command.schema';
+import type { z } from 'zod';
+import type { commandSchema } from './command.schema';
 
 export type Command = z.output<typeof commandSchema>;
 

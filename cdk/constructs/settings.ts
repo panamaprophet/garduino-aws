@@ -1,8 +1,8 @@
-import { Construct } from 'constructs';
 import { AttributeType } from 'aws-cdk-lib/aws-dynamodb';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
-import { createFunction, createTable, FunctionProps, iotArn, ServiceProps } from '../lib';
+import { Construct } from 'constructs';
 import { routes, topics } from '@/services/settings/settings.config';
+import { createFunction, createTable, type FunctionProps, iotArn, type ServiceProps } from '../lib';
 
 export class Settings extends Construct {
     constructor(scope: Construct, id: string, { api, mqtt }: ServiceProps) {

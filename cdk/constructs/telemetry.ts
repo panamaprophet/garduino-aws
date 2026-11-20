@@ -1,8 +1,8 @@
-import { Construct } from 'constructs';
 import { Duration } from 'aws-cdk-lib';
 import { AttributeType } from 'aws-cdk-lib/aws-dynamodb';
-import { createFunction, createTable, FunctionProps, ServiceProps } from '../lib';
+import { Construct } from 'constructs';
 import { routes, topics } from '@/services/telemetry/telemetry.config';
+import { createFunction, createTable, type FunctionProps, type ServiceProps } from '../lib';
 
 export class Telemetry extends Construct {
     constructor(scope: Construct, id: string, { api, mqtt }: ServiceProps) {

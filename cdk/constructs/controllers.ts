@@ -1,11 +1,11 @@
-import { Construct } from 'constructs';
 import { Duration, Stack } from 'aws-cdk-lib';
 import { AttributeType } from 'aws-cdk-lib/aws-dynamodb';
 import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { CfnPolicy } from 'aws-cdk-lib/aws-iot';
-import { Auth } from './auth';
-import { createFunction, createTable, FunctionProps, iotArn, ServiceProps } from '../lib';
+import { Construct } from 'constructs';
 import { routes, topics } from '@/services/controllers/controllers.config';
+import { createFunction, createTable, type FunctionProps, iotArn, type ServiceProps } from '../lib';
+import type { Auth } from './auth';
 
 interface ControllersProps extends ServiceProps {
     auth: Auth;

@@ -1,6 +1,6 @@
-import { Construct } from 'constructs';
 import { Duration, Fn, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { AccountRecovery, OAuthScope, UserPool, UserPoolClientIdentityProvider } from 'aws-cdk-lib/aws-cognito';
+import { Construct } from 'constructs';
 
 const MCP_CALLBACK_PORTS = [8765, 8766, 8767];
 

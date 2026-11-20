@@ -1,6 +1,6 @@
 import { defineMessageHandler, publish } from '@/shared/mqtt';
-import { toDeviceSettings } from '../../entity/settings.model';
 import { getSettings } from '../../entity/settings.api';
+import { toDeviceSettings } from '../../entity/settings.model';
 import { topics } from '../../settings.config';
 import { requestSettingsSchema } from './request-settings.schema';
 

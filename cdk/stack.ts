@@ -1,12 +1,12 @@
-import { Construct } from 'constructs';
-import { CfnOutput, Stack, StackProps } from 'aws-cdk-lib';
-import { Api } from './constructs/http-api';
-import { Mqtt } from './constructs/mqtt-api';
+import { CfnOutput, Stack, type StackProps } from 'aws-cdk-lib';
+import type { Construct } from 'constructs';
 import { Auth } from './constructs/auth';
 import { Controllers } from './constructs/controllers';
+import { Firmware } from './constructs/firmware';
+import { Api } from './constructs/http-api';
+import { Mqtt } from './constructs/mqtt-api';
 import { Settings } from './constructs/settings';
 import { Telemetry } from './constructs/telemetry';
-import { Firmware } from './constructs/firmware';
 
 export class Garduino extends Stack {
     constructor(scope: Construct, id: string, props: StackProps) {

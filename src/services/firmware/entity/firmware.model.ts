@@ -1,4 +1,4 @@
-import { _Object } from '@aws-sdk/client-s3';
+import type { _Object } from '@aws-sdk/client-s3';
 
 export interface Firmware {
     key: string;

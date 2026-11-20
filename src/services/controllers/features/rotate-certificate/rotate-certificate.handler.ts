@@ -1,7 +1,9 @@
 import { controllerParams, defineHandler } from '@/shared/http';
 import { deactivateCertificate, getEndpoint, issueCertificate, listThingCertificates } from '../../entity/thing.api';
 
-export const handler = defineHandler({ params: controllerParams }, async ({ params: { controllerId } }) => {
+const schema = { params: controllerParams };
+
+export const handler = defineHandler(schema, async ({ params: { controllerId } }) => {
     const previousCertificates = await listThingCertificates(controllerId);
     const certificates = await issueCertificate(controllerId);
     const revokedCertificates = await Promise.all(previousCertificates.map(deactivateCertificate));

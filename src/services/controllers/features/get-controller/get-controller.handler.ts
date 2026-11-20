@@ -1,9 +1,11 @@
 import { controllerParams, defineHandler, notFound } from '@/shared/http';
-import { toControllerResponse } from '../../entity/controller.model';
 import { getController } from '../../entity/controller.api';
+import { toControllerResponse } from '../../entity/controller.model';
 
-export const handler = defineHandler({ params: controllerParams }, async ({ params: { controllerId } }) => {
-    const controller = await getController(controllerId) ?? notFound(`Controller "${controllerId}" not found`);
+const schema = { params: controllerParams };
+
+export const handler = defineHandler(schema, async ({ params: { controllerId } }) => {
+    const controller = (await getController(controllerId)) ?? notFound(`Controller "${controllerId}" not found`);
 
     const data = toControllerResponse(controller);
 

@@ -10,9 +10,11 @@ export const intervals = {
 };
 
 export const getSummarySchema = rangeSchema
-    .and(z.object({
-        interval: z.enum(['10m', '1h', '1d']).default('1h'),
-    }))
+    .and(
+        z.object({
+            interval: z.enum(['10m', '1h', '1d']).default('1h'),
+        }),
+    )
     .refine(({ from, to, interval }) => (to - from) / intervals[interval] <= MAX_BUCKETS, {
         error: `range must not exceed ${MAX_BUCKETS} intervals`,
         path: ['interval'],

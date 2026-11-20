@@ -1,9 +1,9 @@
-import { Construct } from 'constructs';
 import { RemovalPolicy } from 'aws-cdk-lib';
 import { PolicyStatement, StarPrincipal } from 'aws-cdk-lib/aws-iam';
 import { BlockPublicAccess, Bucket } from 'aws-cdk-lib/aws-s3';
-import { createFunction, ServiceProps } from '../lib';
+import { Construct } from 'constructs';
 import { routes } from '@/services/firmware/firmware.config';
+import { createFunction, type ServiceProps } from '../lib';
 
 interface FirmwareProps extends ServiceProps {
     bucketName: string;
